@@ -26,6 +26,12 @@ interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  birthDate?: string;
+  birthTime?: string;
+  weight?: number;
+  height?: number;
+  hairColor?: string;
+  eyeColor?: string;
 }
 
 export default function AdminPage() {
@@ -420,32 +426,73 @@ export default function AdminPage() {
             {votes.length === 0 ? (
               <p className="text-center py-8 text-slate-400 italic">Aucun vote pour l&apos;instant</p>
             ) : (
-              votes.map((vote) => (
-                <div
-                  key={vote.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold
-                      ${vote.choice === 'girl' ? 'bg-pink-500' : 'bg-blue-500'}
-                    `}>
-                      {vote.name.charAt(0).toUpperCase()}
+              votes.map((vote) => {
+                const hasExtendedPredictions = vote.birthDate || vote.birthTime || vote.weight || vote.height || vote.hairColor || vote.eyeColor;
+                
+                return (
+                  <div
+                    key={vote.id}
+                    className="p-3 bg-slate-50 rounded-lg"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold
+                          ${vote.choice === 'girl' ? 'bg-pink-500' : 'bg-blue-500'}
+                        `}>
+                          {vote.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-800">{vote.name}</p>
+                          {vote.email && (
+                            <p className="text-xs text-slate-500">{vote.email}</p>
+                          )}
+                          <p className={`text-xs ${vote.choice === 'girl' ? 'text-pink-500' : 'text-blue-500'}`}>
+                            Team {vote.choice === 'girl' ? 'Fille' : 'Garçon'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-400">
+                        {new Date(vote.timestamp).toLocaleString('fr-FR')}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-800">{vote.name}</p>
-                      {vote.email && (
-                        <p className="text-xs text-slate-500">{vote.email}</p>
-                      )}
-                      <p className={`text-xs ${vote.choice === 'girl' ? 'text-pink-500' : 'text-blue-500'}`}>
-                        Team {vote.choice === 'girl' ? 'Fille' : 'Garçon'}
-                      </p>
-                    </div>
+
+                    {hasExtendedPredictions && (
+                      <div className="ml-11 mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-600">
+                        {vote.birthDate && (
+                          <div>
+                            <span className="font-medium">Date:</span> {new Date(vote.birthDate).toLocaleDateString('fr-FR')}
+                          </div>
+                        )}
+                        {vote.birthTime && (
+                          <div>
+                            <span className="font-medium">Heure:</span> {vote.birthTime}
+                          </div>
+                        )}
+                        {vote.weight && (
+                          <div>
+                            <span className="font-medium">Poids:</span> {vote.weight}g
+                          </div>
+                        )}
+                        {vote.height && (
+                          <div>
+                            <span className="font-medium">Taille:</span> {vote.height}cm
+                          </div>
+                        )}
+                        {vote.hairColor && (
+                          <div>
+                            <span className="font-medium">Cheveux:</span> {vote.hairColor}
+                          </div>
+                        )}
+                        {vote.eyeColor && (
+                          <div>
+                            <span className="font-medium">Yeux:</span> {vote.eyeColor}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <span className="text-xs text-slate-400">
-                    {new Date(vote.timestamp).toLocaleString('fr-FR')}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -453,13 +500,20 @@ export default function AdminPage() {
         {/* Quick Links */}
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-4">Liens rapides</h2>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <button
               onClick={() => router.push('/')}
-              className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+              className="bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
             >
               <Eye size={18} />
               Voir la page publique
+            </button>
+            <button
+              onClick={() => router.push('/results')}
+              className="bg-purple-100 text-purple-700 py-3 rounded-xl font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2"
+            >
+              <Users size={18} />
+              Voir les statistiques
             </button>
           </div>
         </div>

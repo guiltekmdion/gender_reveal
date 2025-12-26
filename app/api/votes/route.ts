@@ -39,12 +39,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, choice } = validation.data;
+    const { name, email, choice, birthDate, birthTime, weight, height, hairColor, eyeColor } = validation.data;
 
     const vote = addVote({ 
       name: name.trim(), 
       email: email && email.trim() !== '' ? email.trim() : undefined,
-      choice 
+      choice,
+      birthDate: birthDate && birthDate.trim() !== '' ? birthDate.trim() : undefined,
+      birthTime: birthTime && birthTime.trim() !== '' ? birthTime.trim() : undefined,
+      weight,
+      height,
+      hairColor: hairColor && hairColor.trim() !== '' ? hairColor.trim() : undefined,
+      eyeColor: eyeColor && eyeColor.trim() !== '' ? eyeColor.trim() : undefined
     });
     
     return NextResponse.json(vote);

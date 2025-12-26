@@ -1,0 +1,135 @@
+# Changelog
+
+Toutes les modifications notables de ce projet seront documentées dans ce fichier.
+
+Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
+
+## [Non publié]
+
+### ✨ Ajouté
+
+#### Système de Pronostics Détaillés
+
+Les invités peuvent maintenant faire des pronostics détaillés sur le bébé au-delà du simple choix Fille/Garçon :
+
+- **Date de naissance** - Sélection via date picker
+- **Heure de naissance** - Sélection via time picker (format 24h : 00:00-23:59)
+- **Poids** - Prédiction en grammes (500-10000g)
+- **Taille** - Prédiction en cm (20-100cm)
+- **Couleur des cheveux** - Choix parmi : Bruns, Blonds, Roux, Noirs, Châtains
+- **Couleur des yeux** - Choix parmi : Bleus, Verts, Marrons, Noisette, Gris
+
+Tous ces champs sont **optionnels** et apparaissent dans une modal après le choix du genre.
+
+![Modal de Pronostics](https://github.com/user-attachments/assets/1c6d5396-81b0-4077-a517-f2994564af0a)
+
+*Interface de saisie des pronostics détaillés*
+
+#### Page de Statistiques et Résultats
+
+Nouvelle page `/results` affichant des statistiques complètes :
+
+**Visualisations des Votes**
+- Distribution des votes Fille/Garçon avec barre de progression
+- Comptage détaillé par équipe (Team Fille vs Team Garçon)
+
+**Moyennes Calculées**
+- Poids moyen prédit (en grammes)
+- Taille moyenne prédite (en cm)
+- Couleur de cheveux la plus populaire
+- Couleur d'yeux la plus populaire
+
+**Liste Complète des Participants**
+- Tous les votants avec leurs prédictions détaillées
+- Affichage avec icônes pour chaque type de prédiction
+- Horodatage de chaque vote
+
+![Page de Statistiques](https://github.com/user-attachments/assets/b80c9471-bb1e-41d7-a8e6-4876ac50eae4)
+
+*Dashboard des statistiques et pronostics*
+
+#### Améliorations du Panel Admin
+
+- Affichage de tous les détails de prédictions pour chaque vote
+- Grille organisée montrant : date, heure, poids, taille, couleurs
+- Lien rapide vers la page de statistiques
+
+### 🔧 Technique
+
+**Modèle de Données**
+- Extension de l'interface `Vote` avec 6 nouveaux champs optionnels
+- Validation Zod avec contraintes appropriées :
+  - Poids : 500-10000g
+  - Taille : 20-100cm
+  - Heure : format HH:mm valide (00:00-23:59)
+
+**API**
+- Mise à jour de l'endpoint `/api/votes` pour gérer les données étendues
+- Compatibilité ascendante maintenue - les anciens votes continuent de fonctionner
+
+**Interface Utilisateur**
+- Modal de prédictions avec champs de formulaire intuitifs
+- Date picker et time picker natifs
+- Dropdowns pour les choix de couleurs
+- Design cohérent avec le thème violet/rose existant
+
+### 📊 Calculs Statistiques
+
+- **Moyennes** : Calculées uniquement sur les votes ayant rempli le champ concerné
+- **Plus Populaires** : Utilise le comptage de fréquence pour trouver les valeurs modales
+- **Pourcentages** : Calculés dynamiquement en temps réel
+
+### 🌍 Localisation
+
+Tous les nouveaux éléments d'interface sont en français :
+- Labels de formulaire en français
+- Messages d'aide et placeholders
+- Titres et descriptions des statistiques
+
+### 🔒 Sécurité
+
+- Validation stricte de toutes les entrées utilisateur
+- Parsing sécurisé des nombres avec `parseInt(value, 10)` et vérification NaN
+- Validation du format d'heure (regex pour 00:00-23:59)
+- Aucune vulnérabilité détectée (scan CodeQL passé)
+
+### ♿ Accessibilité
+
+- Labels appropriés pour tous les champs de formulaire
+- Support de la navigation au clavier
+- Messages d'erreur clairs
+- Indicateurs de champs optionnels
+
+## Notes de Version
+
+### Compatibilité
+
+✅ **Rétrocompatible** - Les votes existants sans prédictions continuent de fonctionner
+✅ **Stockage fichier** - Pas de migration nécessaire, utilise `data/votes.json`
+✅ **Champs optionnels** - Les utilisateurs peuvent voter sans remplir les prédictions
+
+### Structure des Fichiers Modifiés
+
+```
+Fichiers modifiés :
+├── lib/storage.ts           # Extension du modèle de données
+├── lib/validation.ts        # Schémas de validation
+├── app/api/votes/route.ts   # Endpoint API mis à jour
+├── app/page.tsx             # Page principale avec modal
+├── app/admin/page.tsx       # Panel admin amélioré
+└── app/results/page.tsx     # ⭐ NOUVEAU - Page de statistiques
+```
+
+### Tests et Qualité
+
+- ✅ Build réussi (0 erreurs)
+- ✅ Linting passé (0 avertissements)
+- ✅ Compilation TypeScript réussie
+- ✅ Scan de sécurité passé (0 vulnérabilités)
+- ✅ Tests manuels effectués
+
+---
+
+## Versions Antérieures
+
+*Ce fichier changelog démarre avec la version actuelle. Les versions précédentes seront documentées lors des prochaines releases.*

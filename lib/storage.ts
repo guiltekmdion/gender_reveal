@@ -16,6 +16,13 @@ export interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  // Extended predictions
+  birthDate?: string; // ISO date string
+  birthTime?: string; // HH:mm format
+  weight?: number; // in grams
+  height?: number; // in cm
+  hairColor?: string;
+  eyeColor?: string;
 }
 
 export interface AppConfig {
@@ -29,6 +36,13 @@ export interface AppConfig {
   revealDate?: string;
   isRevealed?: boolean;
   actualGender?: 'girl' | 'boy' | null;
+  // Actual birth details (for scoring/comparison)
+  actualBirthDate?: string;
+  actualBirthTime?: string;
+  actualWeight?: number;
+  actualHeight?: number;
+  actualHairColor?: string;
+  actualEyeColor?: string;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -72,6 +86,12 @@ export function addVote(vote: Omit<Vote, 'id' | 'timestamp'>): Vote {
     name: vote.name,
     email: vote.email,
     choice: vote.choice,
+    birthDate: vote.birthDate,
+    birthTime: vote.birthTime,
+    weight: vote.weight,
+    height: vote.height,
+    hairColor: vote.hairColor,
+    eyeColor: vote.eyeColor,
     id: Date.now(),
     timestamp: Date.now(),
   };
