@@ -33,6 +33,7 @@ export interface AppConfig {
   girlColor?: string;
   boyColor?: string;
   birthListLink?: string;
+  dueDate?: string;
   revealDate?: string;
   isRevealed?: boolean;
   actualGender?: 'girl' | 'boy' | null;
@@ -53,6 +54,7 @@ const DEFAULT_CONFIG: AppConfig = {
   girlColor: '#ec4899',
   boyColor: '#3b82f6',
   birthListLink: '',
+  dueDate: '',
   revealDate: '',
   isRevealed: false,
   actualGender: null,

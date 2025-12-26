@@ -2,14 +2,18 @@
 
 Une application Next.js adorable et mobile-first pour organiser un gender reveal interactif avec pronostics des invités.
 
+> 📸 **[Voir la documentation complète avec captures d'écran](docs/DOCUMENTATION.md)**
+
 ## ✨ Fonctionnalités
 
 - 🎨 **Design magnifique** - Interface mobile-first avec animations et effets visuels
 - 👥 **Système de votes** - Les invités peuvent voter pour Fille ou Garçon
 - 🎯 **Pronostics détaillés** - Prédictions sur date, heure, poids, taille, couleurs des cheveux et yeux
+- 👶 **Avatar bébé personnalisé** - Système paperdoll inspiré de DiceBear avec 6 couches SVG modulaires
 - 📊 **Statistiques en temps réel** - Visualisation des pourcentages de votes et moyennes des pronostics
 - 📈 **Page de résultats** - Dashboard complet avec statistiques et liste des participants
 - 🔐 **Panel admin sécurisé** - Configuration facile avec mot de passe
+- 🧪 **Tests automatisés** - 12 tests Playwright E2E (100% pass rate)
 - ⚙️ **Personnalisation complète** :
   - Noms des parents et du bébé
   - Couleurs et icônes
@@ -47,6 +51,20 @@ npm install
 
 # Créer le fichier .env.local
 cp .env.example .env.local
+
+# Éditer et changer le mot de passe admin
+# ADMIN_PASSWORD=votre_mot_de_passe_securise
+
+# Créer le dossier data
+mkdir data
+
+# Lancer le serveur de développement
+npm run dev
+
+# Lancer les tests
+npm run test          # Tests Playwright
+npm run test:ui       # Interface graphique
+npm run test:headed   # Mode visible
 
 # Éditer le .env.local et changer le mot de passe admin
 nano .env.local
@@ -108,6 +126,12 @@ La page `/results` affiche :
 - Moyennes des pronostics (poids, taille)
 - Couleurs les plus populaires
 - Liste complète des participants avec leurs prédictions
+
+## 📚 Documentation
+
+- **[Documentation Visuelle avec Screenshots](docs/DOCUMENTATION.md)** - Captures d'écran détaillées de toutes les pages et modales
+- **[Système BabyAvatar Technique](docs/BABYAVATAR.md)** - Architecture complète du système paperdoll SVG inspiré de DiceBear
+- **[Changelog](CHANGELOG.md)** - Historique des versions et modifications
 
 ![Page de Statistiques](https://github.com/user-attachments/assets/b80c9471-bb1e-41d7-a8e6-4876ac50eae4)
 

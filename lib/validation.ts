@@ -23,6 +23,8 @@ export const configSchema = z.object({
   girlColor: z.string().max(20).optional(),
   boyColor: z.string().max(20).optional(),
   birthListLink: z.string().url('URL invalide').optional().or(z.literal('')),
+  // Estimated due date (date du terme)
+  dueDate: z.string().optional().or(z.literal('')),
   revealDate: z.string().optional(),
   isRevealed: z.boolean().optional(),
   actualGender: z.enum(['girl', 'boy']).nullable().optional(),

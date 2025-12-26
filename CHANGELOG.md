@@ -4,6 +4,87 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.0.0] - 2025-12-26
+
+### 🎨 Ajouté (Major Features)
+
+#### Système BabyAvatar Paperdoll
+Architecture modulaire **inspirée de DiceBear** mais 100% personnalisée :
+- 6 couches SVG customisables (base, eyes, face, hair, accessory, clothing)
+- 3 styles de cheveux (default, short, curly)
+- Palettes de 5 couleurs pour cheveux et yeux
+- Props React pour customisation dynamique
+- Tailles multiples (96px modal, 112px résultats)
+- Rendu temps réel des changements de couleur
+
+#### Suite de Tests Playwright (12 tests E2E)
+- ✅ Tests de navigation et chargement de page
+- ✅ Tests d'interactions (votes, sliders, palettes de couleurs)
+- ✅ Tests des workflows de modales (prédictions → email)
+- ✅ Tests responsive (mobile 375px + tablette 768px)
+- ✅ Tests de la page statistiques
+- Scripts npm : `test`, `test:ui`, `test:headed`
+- Configuration auto-start du dev server
+
+#### Documentation Complète
+- **[DOCUMENTATION.md](docs/DOCUMENTATION.md)** - 10 captures d'écran professionnelles
+  - Pages principales et modales
+  - Versions desktop et mobile
+  - Exemples d'interactions
+- **[BABYAVATAR.md](docs/BABYAVATAR.md)** - Documentation technique approfondie
+  - Architecture des 6 couches
+  - Code source détaillé de chaque composant
+  - Comparaison DiceBear vs implémentation custom
+  - Exemples d'utilisation
+- Script automatique de screenshots (`tests/screenshots.spec.ts`)
+
+### 🔧 Modifié
+
+- **Remplacement des BabyPortrait inline**
+  - Ancien : Composants SVG codés en dur dans chaque page
+  - Nouveau : Composant réutilisable `components/BabyAvatar.tsx`
+  - Utilisé dans `app/page.tsx` (modal) et `app/results/page.tsx` (portrait moyen)
+
+- **README.md enrichi**
+  - Liens vers documentation visuelle et technique
+  - Section tests Playwright
+  - Explication du système paperdoll
+
+### 🐛 Corrigé
+
+- **Workflow des modales** - Les tests révélaient un flux incorrect
+  - Correction : "Valider mon vote" → Modal prédictions → "Continuer" → Modal email
+  - Les sliders/palettes sont dans la modal de prédictions (non visibles sur page principale)
+  
+- **Sélecteurs de tests Playwright**
+  - Utilisation d'`aria-label` pour les boutons de couleur
+  - Sélection via `h3:has-text()` pour les titres de modal
+  - Ajout de `.first()` pour éviter les erreurs strict mode
+  - `waitForLoadState('networkidle')` pour stabilité
+
+### 📸 Assets Générés
+
+10 captures d'écran automatiques dans `docs/screenshots/` :
+1. `01-page-principale.png` - Vue initiale
+2. `02-selection-fille.png` - Bouton Fille sélectionné
+3. `03-selection-garcon.png` - Bouton Garçon sélectionné
+4. `04-modal-predictions.png` - Modal de prédictions
+5. `05-modal-predictions-couleurs.png` - Avec couleurs sélectionnées
+6. `06-modal-email.png` - Modal d'email
+7. `07-page-resultats.png` - Page statistiques
+8. `08-page-admin.png` - Panel admin
+9. `09-mobile-principale.png` - Mobile (375×667)
+10. `10-mobile-modal.png` - Modal mobile
+
+### 🎯 Résultats
+
+- **Tests : 12/12 passés ✅** (100% success rate)
+- **Screenshots : 10/10 générés ✅**
+- **Documentation : 2 fichiers complets ✅**
+- **Composants : Migration BabyAvatar complète ✅**
+
+---
+
 ## [Non publié]
 
 ### ✨ Ajouté

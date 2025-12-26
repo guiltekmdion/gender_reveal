@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Baby, Crown, Gamepad2, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp } from 'lucide-react';
+import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import BabyAvatar from '@/components/BabyAvatar';
 
 interface Vote {
   id: number;
@@ -234,6 +235,19 @@ export default function ResultsPage() {
     'Gris': '#a0aec0'
   };
 
+  const mostCommonKey = (counts: Record<string, number>): string | null => {
+    const entries = Object.entries(counts);
+    if (entries.length === 0) return null;
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries[0]?.[0] || null;
+  };
+
+  const mostCommonHair = mostCommonKey(hairColorCounts);
+  const mostCommonEyes = mostCommonKey(eyeColorCounts);
+  const mostCommonHairHex = mostCommonHair ? hairColorMap[mostCommonHair] : undefined;
+  const mostCommonEyeHex = mostCommonEyes ? eyeColorMap[mostCommonEyes] : undefined;
+  const mostCommonGender = girlVotes > boyVotes ? 'girl' : boyVotes > girlVotes ? 'boy' : undefined;
+
   // Date predictions
   const dateCounts: Record<string, number> = {};
   votes.forEach(v => {
@@ -276,12 +290,12 @@ export default function ResultsPage() {
           
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-pink-50 rounded-2xl p-4 text-center border-2 border-pink-200">
-              <Crown className="w-10 h-10 text-pink-500 mx-auto mb-2" fill="currentColor" />
+              <div className="text-5xl text-pink-500 mx-auto mb-2 leading-none">♀</div>
               <p className="text-3xl font-black text-pink-600">{girlVotes}</p>
               <p className="text-sm text-pink-600 font-medium">Team Fille</p>
             </div>
             <div className="bg-blue-50 rounded-2xl p-4 text-center border-2 border-blue-200">
-              <Gamepad2 className="w-10 h-10 text-blue-500 mx-auto mb-2" fill="currentColor" />
+              <div className="text-5xl text-blue-500 mx-auto mb-2 leading-none">♂</div>
               <p className="text-3xl font-black text-blue-600">{boyVotes}</p>
               <p className="text-sm text-blue-600 font-medium">Team Garçon</p>
             </div>
@@ -305,6 +319,36 @@ export default function ResultsPage() {
             <TrendingUp size={20} />
             Moyennes des pronostics
           </h2>
+
+          {(mostCommonHair || mostCommonEyes) && (
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-slate-700">Portrait moyen</p>
+                <p className="text-[10px] text-slate-400">Prédictions les plus fréquentes</p>
+              </div>
+              <div className="flex justify-center">
+                <BabyAvatar 
+                  hairColor={mostCommonHairHex} 
+                  eyeColor={mostCommonEyeHex} 
+                  gender={mostCommonGender}
+                  size={112}
+                />
+              </div>
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-600">
+                <span>
+                  Genre: <span className="font-semibold">{mostCommonGender === 'girl' ? 'Fille' : mostCommonGender === 'boy' ? 'Garçon' : '—'}</span>
+                </span>
+                <span className="text-slate-300">•</span>
+                <span>
+                  Cheveux: <span className="font-semibold">{mostCommonHair || '—'}</span>
+                </span>
+                <span className="text-slate-300">•</span>
+                <span>
+                  Yeux: <span className="font-semibold">{mostCommonEyes || '—'}</span>
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {averageWeight && (

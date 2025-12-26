@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Baby, Crown, Gamepad2, Heart, Star, PartyPopper, Trophy, ExternalLink, X, Mail } from 'lucide-react';
+import { Baby, Star, PartyPopper, Trophy, ExternalLink, X, Mail } from 'lucide-react';
 import Link from 'next/link';
+import BabyAvatar from '@/components/BabyAvatar';
 
 interface Vote {
   id: number;
@@ -27,6 +28,7 @@ interface AppConfig {
   girlColor?: string;
   boyColor?: string;
   birthListLink?: string;
+  dueDate?: string;
   revealDate?: string;
   isRevealed?: boolean;
   actualGender?: 'girl' | 'boy' | null;
@@ -42,7 +44,9 @@ export default function Home() {
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [weight, setWeight] = useState('');
+  const [weightTouched, setWeightTouched] = useState(false);
   const [height, setHeight] = useState('');
+  const [heightTouched, setHeightTouched] = useState(false);
   const [hairColor, setHairColor] = useState('');
   const [eyeColor, setEyeColor] = useState('');
   
@@ -50,6 +54,46 @@ export default function Home() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPredictionsModal, setShowPredictionsModal] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Baby-friendly ranges for sliders (UI only; API validation remains wider)
+  const WEIGHT_MIN = 500;
+  const WEIGHT_MAX = 6000;
+  const WEIGHT_STEP = 50;
+  const WEIGHT_DEFAULT = 3300;
+
+  const HEIGHT_MIN = 25;
+  const HEIGHT_MAX = 60;
+  const HEIGHT_STEP = 1;
+  const HEIGHT_DEFAULT = 50;
+
+  const hairOptions = [
+    { value: 'Blonds', color: '#f5e6b3' },
+    { value: 'Châtains', color: '#a67c52' },
+    { value: 'Bruns', color: '#8b6f47' },
+    { value: 'Roux', color: '#d4856a' },
+    { value: 'Noirs', color: '#4a4a4a' },
+  ];
+
+  const eyeOptions = [
+    { value: 'Bleus', color: '#6ba3d4' },
+    { value: 'Verts', color: '#7ab88f' },
+    { value: 'Gris', color: '#a0aec0' },
+    { value: 'Noisette', color: '#b8956a' },
+    { value: 'Marrons', color: '#a67c52' },
+  ];
+
+  const selectedHairHex = hairOptions.find(o => o.value === hairColor)?.color;
+  const selectedEyeHex = eyeOptions.find(o => o.value === eyeColor)?.color;
+
+  const parseISODate = (value: string): Date | null => {
+    if (!value) return null;
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const dueDateObj = parseISODate(config.dueDate || '');
+  const birthDateObj = parseISODate(birthDate);
+  const daysFromDueDate = (a: Date, b: Date) => Math.round((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
 
   // Load votes and config from API
   useEffect(() => {
@@ -114,6 +158,14 @@ export default function Home() {
     
     // Show predictions modal first
     setShowPredictionsModal(true);
+    
+    // Préremplir la date de naissance avec la date du terme si elle existe
+    if (dueDateObj && !birthDate) {
+      const year = dueDateObj.getFullYear();
+      const month = String(dueDateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dueDateObj.getDate()).padStart(2, '0');
+      setBirthDate(`${year}-${month}-${day}`);
+    }
   };
 
   const handleSubmitVote = async (skipEmail: boolean = false) => {
@@ -140,8 +192,8 @@ export default function Home() {
       // Add predictions if provided
       if (birthDate) voteData.birthDate = birthDate;
       if (birthTime) voteData.birthTime = birthTime;
-      const parsedWeight = weight ? parseInt(weight, 10) : NaN;
-      const parsedHeight = height ? parseInt(height, 10) : NaN;
+      const parsedWeight = weightTouched && weight ? parseInt(weight, 10) : NaN;
+      const parsedHeight = heightTouched && height ? parseInt(height, 10) : NaN;
       if (!isNaN(parsedWeight)) voteData.weight = parsedWeight;
       if (!isNaN(parsedHeight)) voteData.height = parsedHeight;
       if (hairColor) voteData.hairColor = hairColor;
@@ -162,7 +214,9 @@ export default function Home() {
         setBirthDate('');
         setBirthTime('');
         setWeight('');
+        setWeightTouched(false);
         setHeight('');
+        setHeightTouched(false);
         setHairColor('');
         setEyeColor('');
         setShowEmailModal(false);
@@ -199,11 +253,9 @@ export default function Home() {
       <div className={`min-h-screen flex items-center justify-center ${isGirl ? 'bg-gradient-to-br from-pink-100 to-pink-200' : 'bg-gradient-to-br from-blue-100 to-blue-200'}`}>
         <div className="text-center px-4">
           <div className="mb-8">
-            {isGirl ? (
-              <Crown className="w-32 h-32 text-pink-500 mx-auto animate-bounce" fill="currentColor" />
-            ) : (
-              <Gamepad2 className="w-32 h-32 text-blue-500 mx-auto animate-bounce" fill="currentColor" />
-            )}
+            <div className={`text-[128px] mx-auto animate-bounce leading-none ${isGirl ? 'text-pink-500' : 'text-blue-500'}`}>
+              {isGirl ? '♀' : '♂'}
+            </div>
           </div>
           <h1 className={`text-6xl font-black mb-4 ${isGirl ? 'text-pink-600' : 'text-blue-600'}`}>
             {isGirl ? "C'est une FILLE !" : "C'est un GARÇON !"} 🎉
@@ -302,14 +354,14 @@ export default function Home() {
                 }`}
             >
               <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <Crown size={32} fill={selectedChoice === 'girl' ? "currentColor" : "none"} />
+                <div className="text-3xl font-bold leading-none">♀</div>
               </div>
               <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
                 Fille
               </span>
               {selectedChoice === 'girl' && (
                 <div className="absolute top-2 right-2 animate-bounce">
-                  <Heart size={16} className="text-pink-400" fill="currentColor" />
+                  <Star size={16} className="text-pink-400" fill="currentColor" />
                 </div>
               )}
             </button>
@@ -324,7 +376,7 @@ export default function Home() {
                 }`}
             >
               <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <Gamepad2 size={32} fill={selectedChoice === 'boy' ? "currentColor" : "none"} />
+                <div className="text-3xl font-bold leading-none">♂</div>
               </div>
               <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
                 Garçon
@@ -370,10 +422,10 @@ export default function Home() {
                   className="bg-white p-3 rounded-2xl flex items-center justify-between shadow-sm border border-slate-50 animate-in"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm text-2xl font-bold leading-none
                       ${vote.choice === 'girl' ? 'bg-gradient-to-br from-pink-400 to-pink-600' : 'bg-gradient-to-br from-blue-400 to-blue-600'}
                     `}>
-                      {vote.choice === 'girl' ? <Crown size={18} /> : <Gamepad2 size={18} />}
+                      {vote.choice === 'girl' ? '♀' : '♂'}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-700">{vote.name}</span>
@@ -448,7 +500,7 @@ export default function Home() {
                 Fais tes pronostics ! 🎯
               </h3>
               <p className="text-sm text-slate-500">
-                Ces informations sont optionnelles
+                Tous les champs sont obligatoires
               </p>
             </div>
 
@@ -464,6 +516,23 @@ export default function Home() {
                     onChange={(e) => setBirthDate(e.target.value)}
                     className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
                   />
+                  {dueDateObj && (
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      <p>
+                        Terme: <span className="font-medium text-slate-600">{dueDateObj.toLocaleDateString('fr-FR')}</span>
+                      </p>
+                      {birthDateObj && (
+                        <p>
+                          {(() => {
+                            const delta = daysFromDueDate(birthDateObj, dueDateObj);
+                            if (delta === 0) return 'Indication: Jour J (terme)';
+                            if (delta < 0) return `Indication: J${delta} (${Math.abs(delta)} jour(s) avant)`;
+                            return `Indication: J+${delta} (${delta} jour(s) après)`;
+                          })()}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -481,77 +550,216 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Poids (grammes)
-                  </label>
-                  <input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder="ex: 3400"
-                    min="500"
-                    max="10000"
-                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-700">
+                      Poids (grammes)
+                    </label>
+                    {(weightTouched || weight) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWeight('');
+                          setWeightTouched(false);
+                        }}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        Effacer
+                      </button>
+                    )}
+                  </div>
+                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {weightTouched ? `${weight}g` : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {WEIGHT_MIN}–{WEIGHT_MAX}g
+                      </p>
+                    </div>
+                    <input
+                      type="range"
+                      min={WEIGHT_MIN}
+                      max={WEIGHT_MAX}
+                      step={WEIGHT_STEP}
+                      value={weightTouched ? weight : String(WEIGHT_DEFAULT)}
+                      onChange={(e) => {
+                        setWeightTouched(true);
+                        setWeight(e.target.value);
+                      }}
+                      className="w-full mt-2 accent-purple-600"
+                      aria-label="Poids du bébé en grammes"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Taille (cm)
-                  </label>
-                  <input
-                    type="number"
-                    value={height}
-                    onChange={(e) => setHeight(e.target.value)}
-                    placeholder="ex: 50"
-                    min="20"
-                    max="100"
-                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-700">
+                      Taille (cm)
+                    </label>
+                    {(heightTouched || height) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHeight('');
+                          setHeightTouched(false);
+                        }}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        Effacer
+                      </button>
+                    )}
+                  </div>
+                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {heightTouched ? `${height}cm` : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {HEIGHT_MIN}–{HEIGHT_MAX}cm
+                      </p>
+                    </div>
+                    <input
+                      type="range"
+                      min={HEIGHT_MIN}
+                      max={HEIGHT_MAX}
+                      step={HEIGHT_STEP}
+                      value={heightTouched ? height : String(HEIGHT_DEFAULT)}
+                      onChange={(e) => {
+                        setHeightTouched(true);
+                        setHeight(e.target.value);
+                      }}
+                      className="w-full mt-2 accent-purple-600"
+                      aria-label="Taille du bébé en centimètres"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Couleur des cheveux
-                </label>
-                <select
-                  value={hairColor}
-                  onChange={(e) => setHairColor(e.target.value)}
-                  className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
-                >
-                  <option value="">Sélectionne...</option>
-                  <option value="Bruns">Bruns</option>
-                  <option value="Blonds">Blonds</option>
-                  <option value="Roux">Roux</option>
-                  <option value="Noirs">Noirs</option>
-                  <option value="Châtains">Châtains</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-700">
+                    Couleur des cheveux
+                  </label>
+                  {hairColor && (
+                    <button
+                      type="button"
+                      onClick={() => setHairColor('')}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {hairColor ? hairColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Choisis une couleur</p>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                    {hairOptions.map((opt) => {
+                      const isSelected = hairColor === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setHairColor(opt.value)}
+                          className={
+                            `h-10 w-10 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 ` +
+                            (isSelected
+                              ? 'border-white ring-2 ring-purple-400 shadow'
+                              : 'border-slate-200 hover:border-slate-300')
+                          }
+                          style={{ backgroundColor: opt.color }}
+                          aria-label={`Cheveux: ${opt.value}`}
+                          aria-pressed={isSelected}
+                          title={opt.value}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Couleur des yeux
-                </label>
-                <select
-                  value={eyeColor}
-                  onChange={(e) => setEyeColor(e.target.value)}
-                  className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
-                >
-                  <option value="">Sélectionne...</option>
-                  <option value="Bleus">Bleus</option>
-                  <option value="Verts">Verts</option>
-                  <option value="Marrons">Marrons</option>
-                  <option value="Noisette">Noisette</option>
-                  <option value="Gris">Gris</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-700">
+                    Couleur des yeux
+                  </label>
+                  {eyeColor && (
+                    <button
+                      type="button"
+                      onClick={() => setEyeColor('')}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {eyeColor ? eyeColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Choisis une couleur</p>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                    {eyeOptions.map((opt) => {
+                      const isSelected = eyeColor === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setEyeColor(opt.value)}
+                          className={
+                            `h-10 w-10 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 ` +
+                            (isSelected
+                              ? 'border-white ring-2 ring-purple-400 shadow'
+                              : 'border-slate-200 hover:border-slate-300')
+                          }
+                          style={{ backgroundColor: opt.color }}
+                          aria-label={`Yeux: ${opt.value}`}
+                          aria-pressed={isSelected}
+                          title={opt.value}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Aperçu</p>
+                  <p className="text-[10px] text-slate-400">{selectedChoice === 'girl' ? 'Fille' : selectedChoice === 'boy' ? 'Garçon' : '—'}</p>
+                </div>
+                <div className="flex justify-center">
+                  <BabyAvatar 
+                    hairColor={selectedHairHex} 
+                    eyeColor={selectedEyeHex} 
+                    gender={selectedChoice || undefined}
+                    size={96}
+                  />
+                </div>
+                <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+                  <span>
+                    Cheveux: <span className="font-medium text-slate-600">{hairColor || '—'}</span>
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span>
+                    Yeux: <span className="font-medium text-slate-600">{eyeColor || '—'}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2 mt-6">
               <button
                 onClick={() => setShowEmailModal(true)}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                disabled={!birthDate || !birthTime || !weight || !height || !hairColor || !eyeColor}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:-translate-y-0"
               >
                 Continuer
               </button>
