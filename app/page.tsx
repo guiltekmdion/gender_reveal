@@ -190,9 +190,14 @@ export default function Home() {
           <Baby className="text-purple-500" />
           Fille ou Garçon ?
         </h1>
-        <p className="text-sm text-slate-500 font-medium mt-1">
-          {config.parentNames || 'Fais ton pronostic !'}
+        <p className="text-base text-slate-600 font-medium mt-1">
+          Quel sera le genre de {config.babyName || 'Bébé'} ?
         </p>
+        {config.parentNames && (
+          <p className="text-sm text-slate-400 font-medium mt-1">
+            {config.parentNames}
+          </p>
+        )}
       </div>
 
       <div className="max-w-md mx-auto px-4 mt-6 space-y-8">
