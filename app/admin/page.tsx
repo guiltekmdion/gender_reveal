@@ -23,6 +23,7 @@ interface AppConfig {
 interface Vote {
   id: number;
   name: string;
+  email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
 }
@@ -421,14 +422,17 @@ export default function AdminPage() {
                   key={vote.id}
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold
                       ${vote.choice === 'girl' ? 'bg-pink-500' : 'bg-blue-500'}
                     `}>
                       {vote.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-slate-800">{vote.name}</p>
+                      {vote.email && (
+                        <p className="text-xs text-slate-500">{vote.email}</p>
+                      )}
                       <p className={`text-xs ${vote.choice === 'girl' ? 'text-pink-500' : 'text-blue-500'}`}>
                         Team {vote.choice === 'girl' ? 'Fille' : 'Garçon'}
                       </p>

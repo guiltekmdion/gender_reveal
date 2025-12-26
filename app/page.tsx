@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Baby, Crown, Gamepad2, Heart, Star, PartyPopper, Trophy, ExternalLink } from 'lucide-react';
+import { Baby, Crown, Gamepad2, Heart, Star, PartyPopper, Trophy, ExternalLink, X, Mail } from 'lucide-react';
 import Link from 'next/link';
 
 interface Vote {
   id: number;
   name: string;
+  email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
 }
@@ -28,8 +29,10 @@ export default function Home() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [config, setConfig] = useState<AppConfig>({});
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedChoice, setSelectedChoice] = useState<'girl' | 'boy' | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Load votes and config from API
@@ -83,7 +86,7 @@ export default function Home() {
   const girlPercent = totalVotes === 0 ? 50 : Math.round((girlVotes / totalVotes) * 100);
   const boyPercent = totalVotes === 0 ? 50 : Math.round((boyVotes / totalVotes) * 100);
 
-  const handleVote = async () => {
+  const handleVoteClick = () => {
     if (!name.trim()) {
       alert("Hé ! N'oublie pas de mettre ton prénom !");
       return;
@@ -92,25 +95,42 @@ export default function Home() {
       alert("Choisis ton équipe (Fille ou Garçon) !");
       return;
     }
+    
+    // Show email modal
+    setShowEmailModal(true);
+  };
 
+  const handleSubmitVote = async (skipEmail: boolean = false) => {
     try {
+      const voteData: { name: string; choice: 'girl' | 'boy'; email?: string } = {
+        name: name.trim(),
+        choice: selectedChoice!,
+      };
+
+      if (!skipEmail && email.trim()) {
+        voteData.email = email.trim();
+      }
+
       const res = await fetch('/api/votes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), choice: selectedChoice }),
+        body: JSON.stringify(voteData),
       });
 
       if (res.ok) {
         const newVote = await res.json();
         setVotes([newVote, ...votes]);
         setName('');
+        setEmail('');
         setSelectedChoice(null);
+        setShowEmailModal(false);
         setShowConfetti(true);
         
         // Reset confetti animation
         setTimeout(() => setShowConfetti(false), 3000);
       } else {
-        alert("Erreur lors de l'enregistrement du vote");
+        const errorData = await res.json();
+        alert(errorData.error || "Erreur lors de l'enregistrement du vote");
       }
     } catch (error) {
       console.error('Error submitting vote:', error);
@@ -173,17 +193,6 @@ export default function Home() {
         <p className="text-sm text-slate-500 font-medium mt-1">
           {config.parentNames || 'Fais ton pronostic !'}
         </p>
-        {config.birthListLink && (
-          <a
-            href={config.birthListLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-2 transition-colors"
-          >
-            <ExternalLink size={14} />
-            Liste de naissance
-          </a>
-        )}
       </div>
 
       <div className="max-w-md mx-auto px-4 mt-6 space-y-8">
@@ -281,7 +290,7 @@ export default function Home() {
           </div>
 
           <button
-            onClick={handleVote}
+            onClick={handleVoteClick}
             disabled={!name || !selectedChoice}
             className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transform transition-all active:scale-95 flex items-center justify-center gap-2
               ${(!name || !selectedChoice) 
@@ -334,6 +343,26 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Birth List Link - Moved here after votes */}
+        {config.birthListLink && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
+            <div className="text-center space-y-3">
+              <p className="text-sm font-medium text-slate-600">
+                Envie de nous gâter ? 🎁
+              </p>
+              <a
+                href={config.birthListLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white text-purple-600 px-6 py-3 rounded-xl font-bold shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+              >
+                <ExternalLink size={18} />
+                Voir la liste de naissance
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Footer actions */}
         <div className="pt-8 pb-4 text-center space-y-2">
           <Link 
@@ -345,6 +374,58 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative animate-in">
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+                <Mail className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">
+                Reste informé(e) ! 📧
+              </h3>
+              <p className="text-sm text-slate-500">
+                Laisse-nous ton email pour recevoir des nouvelles (optionnel)
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ton-email@exemple.com"
+                className="w-full text-center text-base border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
+              />
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleSubmitVote(false)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                >
+                  Envoyer mon vote avec email
+                </button>
+                
+                <button
+                  onClick={() => handleSubmitVote(true)}
+                  className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                >
+                  Continuer sans email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confetti Overlay Simple (CSS-based feedback) */}
       {showConfetti && (

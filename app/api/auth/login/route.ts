@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPassword, generateToken } from '@/lib/auth';
+import { loginSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = await request.json();
+    const body = await request.json();
 
-    if (!password) {
+    // Validate with Zod
+    const validation = loginSchema.safeParse(body);
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Password required' },
+        { error: 'Validation failed', details: validation.error.flatten() },
         { status: 400 }
       );
     }
+
+    const { password } = validation.data;
 
     if (!verifyPassword(password)) {
       return NextResponse.json(

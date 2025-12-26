@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { getVotes, addVote, clearVotes } from '@/lib/storage';
+import { voteSchema } from '@/lib/validation';
 
 function checkAuth(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
@@ -26,23 +27,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, choice } = await request.json();
+    const body = await request.json();
 
-    if (!name || !choice) {
+    // Validate with Zod
+    const validation = voteSchema.safeParse(body);
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Name and choice are required' },
+        { error: 'Validation failed', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
-    if (choice !== 'girl' && choice !== 'boy') {
-      return NextResponse.json(
-        { error: 'Choice must be "girl" or "boy"' },
-        { status: 400 }
-      );
-    }
+    const { name, email, choice } = validation.data;
 
-    const vote = addVote({ name: name.trim(), choice });
+    const vote = addVote({ 
+      name: name.trim(), 
+      email: email && email.trim() !== '' ? email.trim() : undefined,
+      choice 
+    });
     
     return NextResponse.json(vote);
   } catch (error) {

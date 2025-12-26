@@ -13,6 +13,7 @@ if (!fs.existsSync(DATA_DIR)) {
 export interface Vote {
   id: number;
   name: string;
+  email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
 }
@@ -68,7 +69,9 @@ export function saveVotes(votes: Vote[]): void {
 export function addVote(vote: Omit<Vote, 'id' | 'timestamp'>): Vote {
   const votes = getVotes();
   const newVote: Vote = {
-    ...vote,
+    name: vote.name,
+    email: vote.email,
+    choice: vote.choice,
     id: Date.now(),
     timestamp: Date.now(),
   };
