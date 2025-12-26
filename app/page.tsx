@@ -140,8 +140,10 @@ export default function Home() {
       // Add predictions if provided
       if (birthDate) voteData.birthDate = birthDate;
       if (birthTime) voteData.birthTime = birthTime;
-      if (weight) voteData.weight = parseInt(weight);
-      if (height) voteData.height = parseInt(height);
+      const parsedWeight = weight ? parseInt(weight, 10) : NaN;
+      const parsedHeight = height ? parseInt(height, 10) : NaN;
+      if (!isNaN(parsedWeight)) voteData.weight = parsedWeight;
+      if (!isNaN(parsedHeight)) voteData.height = parsedHeight;
       if (hairColor) voteData.hairColor = hairColor;
       if (eyeColor) voteData.eyeColor = eyeColor;
 

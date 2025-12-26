@@ -7,7 +7,7 @@ export const voteSchema = z.object({
   choice: z.enum(['girl', 'boy']),
   // Extended predictions
   birthDate: z.string().optional(),
-  birthTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Format HH:mm requis').optional().or(z.literal('')),
+  birthTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Format HH:mm requis').optional().or(z.literal('')),
   weight: z.number().min(500).max(10000).optional(),
   height: z.number().min(20).max(100).optional(),
   hairColor: z.string().max(50).optional().or(z.literal('')),
