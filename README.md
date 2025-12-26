@@ -6,7 +6,9 @@ Une application Next.js adorable et mobile-first pour organiser un gender reveal
 
 - 🎨 **Design magnifique** - Interface mobile-first avec animations et effets visuels
 - 👥 **Système de votes** - Les invités peuvent voter pour Fille ou Garçon
-- 📊 **Statistiques en temps réel** - Visualisation des pourcentages de votes
+- 🎯 **Pronostics détaillés** - Prédictions sur date, heure, poids, taille, couleurs des cheveux et yeux
+- 📊 **Statistiques en temps réel** - Visualisation des pourcentages de votes et moyennes des pronostics
+- 📈 **Page de résultats** - Dashboard complet avec statistiques et liste des participants
 - 🔐 **Panel admin sécurisé** - Configuration facile avec mot de passe
 - ⚙️ **Personnalisation complète** :
   - Noms des parents et du bébé
@@ -89,14 +91,31 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 Les invités peuvent :
 - Entrer leur prénom
 - Voter pour Fille ou Garçon
+- **Faire des pronostics détaillés** (optionnel) :
+  - Date et heure de naissance
+  - Poids et taille du bébé
+  - Couleur des cheveux et des yeux
 - Voir les statistiques en temps réel
 - Consulter tous les votes
 - Accéder à la liste de naissance (si configurée)
+
+![Modal de Pronostics](https://github.com/user-attachments/assets/1c6d5396-81b0-4077-a517-f2994564af0a)
+
+### Page de statistiques
+
+La page `/results` affiche :
+- Distribution des votes Fille/Garçon
+- Moyennes des pronostics (poids, taille)
+- Couleurs les plus populaires
+- Liste complète des participants avec leurs prédictions
+
+![Page de Statistiques](https://github.com/user-attachments/assets/b80c9471-bb1e-41d7-a8e6-4876ac50eae4)
 
 ### Panel admin
 
 Les administrateurs peuvent :
 - Voir les statistiques détaillées
+- Consulter tous les pronostics de chaque participant
 - Configurer les informations de l'événement
 - Gérer les votes (visualiser, supprimer)
 - Activer la révélation du sexe
@@ -119,14 +138,17 @@ gender_reveal/
 │   │   ├── config/    # Configuration
 │   │   └── votes/     # Gestion des votes
 │   ├── admin/         # Panel d'administration
+│   ├── results/       # Page de statistiques
 │   ├── page.tsx       # Page principale (publique)
 │   └── globals.css    # Styles globaux
 ├── lib/
 │   ├── auth.ts        # Logique d'authentification
-│   └── storage.ts     # Gestion des données
+│   ├── storage.ts     # Gestion des données
+│   └── validation.ts  # Schémas de validation
 ├── data/              # Stockage des données (gitignored)
 ├── Dockerfile         # Configuration Docker
 ├── docker-compose.yml # Configuration Docker Compose
+├── CHANGELOG.md       # Historique des versions
 └── README.md          # Ce fichier
 ```
 
