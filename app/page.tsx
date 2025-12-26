@@ -292,143 +292,62 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Bouton Fille - Video Game Style */}
+            {/* Bouton Fille */}
             <button
               onClick={() => setSelectedChoice('girl')}
-              className={`relative group overflow-hidden rounded-2xl p-6 transition-all duration-300 border-4 flex flex-col items-center gap-3 transform
+              className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2
                 ${selectedChoice === 'girl' 
-                  ? 'border-pink-500 bg-gradient-to-br from-pink-50 via-pink-100 to-pink-50 shadow-[0_0_25px_rgba(236,72,153,0.5)] scale-110 -rotate-2' 
-                  : 'border-slate-200 hover:border-pink-300 bg-gradient-to-br from-white to-slate-50 hover:bg-gradient-to-br hover:from-pink-50 hover:to-white hover:shadow-[0_0_15px_rgba(236,72,153,0.3)] hover:scale-105 hover:-rotate-1'
+                  ? 'border-pink-500 bg-pink-50 shadow-pink-200 shadow-lg scale-105' 
+                  : 'border-slate-100 hover:border-pink-200 bg-white hover:bg-pink-50 text-slate-400 grayscale hover:grayscale-0'
                 }`}
             >
-              {/* Glow effect background */}
-              {selectedChoice === 'girl' && (
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 via-transparent to-pink-600/20 animate-pulse"></div>
-              )}
-              
-              {/* Icon with gaming style */}
-              <div className={`relative p-4 rounded-2xl transition-all duration-300 ${
-                selectedChoice === 'girl' 
-                  ? 'bg-gradient-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/50 animate-pulse' 
-                  : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 group-hover:from-pink-200 group-hover:to-pink-300 group-hover:text-pink-600'
-              }`}>
-                <Crown size={40} fill={selectedChoice === 'girl' ? "currentColor" : "none"} strokeWidth={2.5} />
+              <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                <Crown size={32} fill={selectedChoice === 'girl' ? "currentColor" : "none"} />
               </div>
-              
-              {/* Label with arcade font style */}
-              <span className={`font-black uppercase tracking-widest text-xl transition-all ${
-                selectedChoice === 'girl' 
-                  ? 'text-pink-600 drop-shadow-[0_2px_4px_rgba(236,72,153,0.5)]' 
-                  : 'text-slate-400 group-hover:text-pink-500'
-              }`}>
+              <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
                 Fille
               </span>
-              
-              {/* Selection indicator - Game style */}
               {selectedChoice === 'girl' && (
-                <>
-                  <div className="absolute top-3 right-3 animate-bounce">
-                    <Heart size={20} className="text-pink-500 drop-shadow-lg" fill="currentColor" />
-                  </div>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
-                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-ping"></div>
-                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-ping" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-ping" style={{animationDelay: '0.4s'}}></div>
-                  </div>
-                </>
+                <div className="absolute top-2 right-2 animate-bounce">
+                  <Heart size={16} className="text-pink-400" fill="currentColor" />
+                </div>
               )}
-              
-              {/* Hover sparkle effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute top-4 right-8 w-1 h-1 bg-pink-400 rounded-full animate-ping"></div>
-                <div className="absolute bottom-8 left-6 w-1 h-1 bg-pink-400 rounded-full animate-ping" style={{animationDelay: '0.3s'}}></div>
-              </div>
             </button>
 
-            {/* Bouton Garçon - Video Game Style */}
+            {/* Bouton Garçon */}
             <button
               onClick={() => setSelectedChoice('boy')}
-              className={`relative group overflow-hidden rounded-2xl p-6 transition-all duration-300 border-4 flex flex-col items-center gap-3 transform
+              className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2
                 ${selectedChoice === 'boy' 
-                  ? 'border-blue-500 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 shadow-[0_0_25px_rgba(59,130,246,0.5)] scale-110 rotate-2' 
-                  : 'border-slate-200 hover:border-blue-300 bg-gradient-to-br from-white to-slate-50 hover:bg-gradient-to-br hover:from-blue-50 hover:to-white hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:scale-105 hover:rotate-1'
+                  ? 'border-blue-500 bg-blue-50 shadow-blue-200 shadow-lg scale-105' 
+                  : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-400 grayscale hover:grayscale-0'
                 }`}
             >
-              {/* Glow effect background */}
-              {selectedChoice === 'boy' && (
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-transparent to-blue-600/20 animate-pulse"></div>
-              )}
-              
-              {/* Icon with gaming style */}
-              <div className={`relative p-4 rounded-2xl transition-all duration-300 ${
-                selectedChoice === 'boy' 
-                  ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/50 animate-pulse' 
-                  : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 group-hover:from-blue-200 group-hover:to-blue-300 group-hover:text-blue-600'
-              }`}>
-                <Gamepad2 size={40} fill={selectedChoice === 'boy' ? "currentColor" : "none"} strokeWidth={2.5} />
+              <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                <Gamepad2 size={32} fill={selectedChoice === 'boy' ? "currentColor" : "none"} />
               </div>
-              
-              {/* Label with arcade font style */}
-              <span className={`font-black uppercase tracking-widest text-xl transition-all ${
-                selectedChoice === 'boy' 
-                  ? 'text-blue-600 drop-shadow-[0_2px_4px_rgba(59,130,246,0.5)]' 
-                  : 'text-slate-400 group-hover:text-blue-500'
-              }`}>
+              <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
                 Garçon
               </span>
-              
-              {/* Selection indicator - Game style */}
               {selectedChoice === 'boy' && (
-                <>
-                  <div className="absolute top-3 right-3 animate-bounce">
-                    <Star size={20} className="text-blue-500 drop-shadow-lg" fill="currentColor" />
-                  </div>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" style={{animationDelay: '0.4s'}}></div>
-                  </div>
-                </>
+                <div className="absolute top-2 right-2 animate-bounce">
+                  <Star size={16} className="text-blue-400" fill="currentColor" />
+                </div>
               )}
-              
-              {/* Hover sparkle effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute top-4 left-8 w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
-                <div className="absolute bottom-8 right-6 w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '0.3s'}}></div>
-              </div>
             </button>
           </div>
 
           <button
             onClick={handleVoteClick}
             disabled={!name || !selectedChoice}
-            className={`relative w-full py-4 rounded-xl font-black text-xl uppercase tracking-wider shadow-lg transform transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden
+            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transform transition-all active:scale-95 flex items-center justify-center gap-2
               ${(!name || !selectedChoice) 
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.8)] hover:-translate-y-1 active:scale-95 bg-[length:200%_100%] animate-gradient'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1'
               }`}
-            style={(!name || !selectedChoice) ? {} : {
-              animation: 'gradient 3s ease infinite'
-            }}
           >
-            {/* Animated background effect */}
-            {name && selectedChoice && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400"></div>
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-yellow-400 to-pink-400"></div>
-              </>
-            )}
-            
-            <span className="relative z-10 flex items-center gap-3">
-              {showConfetti ? (
-                <PartyPopper className="animate-spin" size={24} />
-              ) : (
-                <Trophy size={24} className="animate-bounce" />
-              )}
-              Valider mon vote !
-              {name && selectedChoice && <Star size={20} className="animate-pulse" fill="currentColor" />}
-            </span>
+            {showConfetti ? <PartyPopper className="animate-spin" /> : <Trophy size={20} />}
+            Valider mon vote !
           </button>
         </div>
 
