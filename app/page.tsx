@@ -10,6 +10,13 @@ interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  // Extended predictions
+  birthDate?: string;
+  birthTime?: string;
+  weight?: number;
+  height?: number;
+  hairColor?: string;
+  eyeColor?: string;
 }
 
 interface AppConfig {
@@ -31,8 +38,17 @@ export default function Home() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedChoice, setSelectedChoice] = useState<'girl' | 'boy' | null>(null);
+  // Extended prediction fields
+  const [birthDate, setBirthDate] = useState('');
+  const [birthTime, setBirthTime] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [hairColor, setHairColor] = useState('');
+  const [eyeColor, setEyeColor] = useState('');
+  
   const [showConfetti, setShowConfetti] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showPredictionsModal, setShowPredictionsModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Load votes and config from API
@@ -96,13 +112,23 @@ export default function Home() {
       return;
     }
     
-    // Show email modal
-    setShowEmailModal(true);
+    // Show predictions modal first
+    setShowPredictionsModal(true);
   };
 
   const handleSubmitVote = async (skipEmail: boolean = false) => {
     try {
-      const voteData: { name: string; choice: 'girl' | 'boy'; email?: string } = {
+      const voteData: { 
+        name: string; 
+        choice: 'girl' | 'boy'; 
+        email?: string;
+        birthDate?: string;
+        birthTime?: string;
+        weight?: number;
+        height?: number;
+        hairColor?: string;
+        eyeColor?: string;
+      } = {
         name: name.trim(),
         choice: selectedChoice!,
       };
@@ -110,6 +136,14 @@ export default function Home() {
       if (!skipEmail && email.trim()) {
         voteData.email = email.trim();
       }
+
+      // Add predictions if provided
+      if (birthDate) voteData.birthDate = birthDate;
+      if (birthTime) voteData.birthTime = birthTime;
+      if (weight) voteData.weight = parseInt(weight);
+      if (height) voteData.height = parseInt(height);
+      if (hairColor) voteData.hairColor = hairColor;
+      if (eyeColor) voteData.eyeColor = eyeColor;
 
       const res = await fetch('/api/votes', {
         method: 'POST',
@@ -123,7 +157,14 @@ export default function Home() {
         setName('');
         setEmail('');
         setSelectedChoice(null);
+        setBirthDate('');
+        setBirthTime('');
+        setWeight('');
+        setHeight('');
+        setHairColor('');
+        setEyeColor('');
         setShowEmailModal(false);
+        setShowPredictionsModal(false);
         setShowConfetti(true);
         
         // Reset confetti animation
@@ -371,6 +412,12 @@ export default function Home() {
         {/* Footer actions */}
         <div className="pt-8 pb-4 text-center space-y-2">
           <Link 
+            href="/results"
+            className="text-sm text-purple-600 hover:text-purple-700 transition-colors block font-medium"
+          >
+            📊 Voir les statistiques
+          </Link>
+          <Link 
             href="/admin"
             className="text-xs text-slate-300 hover:text-slate-400 transition-colors block"
           >
@@ -379,6 +426,144 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* Predictions Modal */}
+      {showPredictionsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative animate-in my-8">
+            <button
+              onClick={() => setShowPredictionsModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+                <Baby className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">
+                Fais tes pronostics ! 🎯
+              </h3>
+              <p className="text-sm text-slate-500">
+                Ces informations sont optionnelles
+              </p>
+            </div>
+
+            <div className="space-y-4 max-h-96 overflow-y-auto px-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Date de naissance
+                  </label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Heure de naissance
+                  </label>
+                  <input
+                    type="time"
+                    value={birthTime}
+                    onChange={(e) => setBirthTime(e.target.value)}
+                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Poids (grammes)
+                  </label>
+                  <input
+                    type="number"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    placeholder="ex: 3400"
+                    min="500"
+                    max="10000"
+                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Taille (cm)
+                  </label>
+                  <input
+                    type="number"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
+                    placeholder="ex: 50"
+                    min="20"
+                    max="100"
+                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Couleur des cheveux
+                </label>
+                <select
+                  value={hairColor}
+                  onChange={(e) => setHairColor(e.target.value)}
+                  className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                >
+                  <option value="">Sélectionne...</option>
+                  <option value="Bruns">Bruns</option>
+                  <option value="Blonds">Blonds</option>
+                  <option value="Roux">Roux</option>
+                  <option value="Noirs">Noirs</option>
+                  <option value="Châtains">Châtains</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Couleur des yeux
+                </label>
+                <select
+                  value={eyeColor}
+                  onChange={(e) => setEyeColor(e.target.value)}
+                  className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                >
+                  <option value="">Sélectionne...</option>
+                  <option value="Bleus">Bleus</option>
+                  <option value="Verts">Verts</option>
+                  <option value="Marrons">Marrons</option>
+                  <option value="Noisette">Noisette</option>
+                  <option value="Gris">Gris</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-6">
+              <button
+                onClick={() => setShowEmailModal(true)}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+              >
+                Continuer
+              </button>
+              
+              <button
+                onClick={() => setShowPredictionsModal(false)}
+                className="w-full bg-slate-100 text-slate-600 py-2 rounded-xl font-medium text-sm hover:bg-slate-200 transition-colors"
+              >
+                Retour
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Email Modal */}
       {showEmailModal && (
