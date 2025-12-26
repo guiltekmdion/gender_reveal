@@ -110,11 +110,11 @@ export default function Home() {
         // Reset confetti animation
         setTimeout(() => setShowConfetti(false), 3000);
       } else {
-        alert('Erreur lors de l\'enregistrement du vote');
+        alert("Erreur lors de l'enregistrement du vote");
       }
     } catch (error) {
       console.error('Error submitting vote:', error);
-      alert('Erreur lors de l\'enregistrement du vote');
+      alert("Erreur lors de l'enregistrement du vote");
     }
   };
 
@@ -143,7 +143,7 @@ export default function Home() {
             )}
           </div>
           <h1 className={`text-6xl font-black mb-4 ${isGirl ? 'text-pink-600' : 'text-blue-600'}`}>
-            C'est {isGirl ? 'une FILLE' : 'un GARÇON'} ! 🎉
+            {isGirl ? "C'est une FILLE !" : "C'est un GARÇON !"} 🎉
           </h1>
           {config.babyName && config.babyName !== 'Bébé' && (
             <p className="text-3xl font-bold text-slate-700 mb-8">
@@ -304,7 +304,7 @@ export default function Home() {
           <div className="space-y-3">
             {votes.length === 0 ? (
               <div className="text-center py-8 text-slate-400 italic">
-                Aucun vote pour l'instant. Sois le premier !
+                Aucun vote pour l&apos;instant. Sois le premier !
               </div>
             ) : (
               votes.map((vote) => (

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Lock, Save, Trash2, Eye, EyeOff, LogOut, 
-  Baby, Heart, Settings, Users, CheckCircle 
+  Lock, Save, Trash2, Eye, LogOut, 
+  Baby, Heart, Settings, Users
 } from 'lucide-react';
 
 interface AppConfig {
@@ -43,13 +43,13 @@ export default function AdminPage() {
     if (savedToken) {
       setToken(savedToken);
       setIsAuthenticated(true);
-      loadData(savedToken);
+      loadData();
     } else {
       setLoading(false);
     }
   }, []);
 
-  const loadData = async (authToken: string) => {
+  const loadData = async () => {
     try {
       const [configRes, votesRes] = await Promise.all([
         fetch('/api/config'),
@@ -88,7 +88,7 @@ export default function AdminPage() {
         localStorage.setItem('admin_token', data.token);
         setIsAuthenticated(true);
         setPassword('');
-        loadData(data.token);
+        loadData();
       } else {
         alert('Mot de passe incorrect');
       }
@@ -165,7 +165,7 @@ export default function AdminPage() {
               <Lock className="w-8 h-8 text-purple-600" />
             </div>
             <h1 className="text-2xl font-bold text-slate-800 mb-2">Administration</h1>
-            <p className="text-slate-500 text-sm">Accès réservé aux administrateurs</p>
+            <p className="text-sm text-slate-500 text-sm">Accès réservé aux administrateurs</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -196,7 +196,7 @@ export default function AdminPage() {
               onClick={() => router.push('/')}
               className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
             >
-              ← Retour à l'accueil
+              ← Retour à l&apos;accueil
             </button>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Settings size={20} />
-            Configuration de l'application
+            Configuration de l&apos;application
           </h2>
 
           <div className="space-y-4">
@@ -414,7 +414,7 @@ export default function AdminPage() {
 
           <div className="space-y-2">
             {votes.length === 0 ? (
-              <p className="text-center py-8 text-slate-400 italic">Aucun vote pour l'instant</p>
+              <p className="text-center py-8 text-slate-400 italic">Aucun vote pour l&apos;instant</p>
             ) : (
               votes.map((vote) => (
                 <div
