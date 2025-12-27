@@ -500,7 +500,7 @@ export default function Home() {
                 Fais tes pronostics ! 🎯
               </h3>
               <p className="text-sm text-slate-500">
-                Tous les champs sont obligatoires
+                Tous les champs sont obligatoires pour continuer
               </p>
             </div>
 
