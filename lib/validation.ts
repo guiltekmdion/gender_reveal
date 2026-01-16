@@ -34,7 +34,9 @@ export const configSchema = z.object({
   actualWeight: z.number().optional(),
   actualHeight: z.number().optional(),
   actualHairColor: z.string().max(50).optional(),
-  actualEyeColor: z.string().max(50).optional()
+  actualEyeColor: z.string().max(50).optional(),
+  // Date format configuration
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY']).optional()
 });
 
 // Auth validation schema

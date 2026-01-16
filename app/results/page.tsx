@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import BabyAvatar from '@/components/BabyAvatar';
+import { formatDate, formatDateLong } from '@/lib/date-utils';
 
 interface Vote {
   id: number;
@@ -22,6 +23,7 @@ interface Vote {
 interface AppConfig {
   babyName?: string;
   parentNames?: string;
+  dateFormat?: string;
 }
 
 // Composant Roue de Couleurs - Style Gender Reveal doux
@@ -416,12 +418,7 @@ export default function ResultsPage() {
                       {index + 1}
                     </div>
                     <span className="font-medium text-slate-700">
-                      {new Date(date).toLocaleDateString('fr-FR', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
+                      {formatDateLong(date, undefined, config)}
                     </span>
                   </div>
                   <span className="text-sm font-bold text-purple-600">{count} vote(s)</span>
@@ -467,7 +464,7 @@ export default function ResultsPage() {
                         </div>
                       </div>
                       <span className="text-xs text-slate-400">
-                        {new Date(vote.timestamp).toLocaleDateString('fr-FR')}
+                        {formatDate(new Date(vote.timestamp), undefined, config)}
                       </span>
                     </div>
 
@@ -476,7 +473,7 @@ export default function ResultsPage() {
                         {vote.birthDate && (
                           <div className="flex items-center gap-1 text-slate-600">
                             <Calendar size={12} className="text-purple-500" />
-                            <span>{new Date(vote.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                            <span>{formatDate(vote.birthDate, undefined, config)}</span>
                           </div>
                         )}
                         {vote.birthTime && (

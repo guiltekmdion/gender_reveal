@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Lock, Save, Trash2, Eye, LogOut, 
-  Baby, Heart, Settings, Users
+  Baby, Heart, Settings, Users, Calendar
 } from 'lucide-react';
+import DatePicker from '@/components/DatePicker';
+import { formatDate, formatDateTime } from '@/lib/date-utils';
 
 interface AppConfig {
   babyName?: string;
@@ -345,18 +347,52 @@ export default function AdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Date du terme
-                </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={config.dueDate || ''}
-                  onChange={(e) => setConfig({ ...config, dueDate: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                  onChange={(value) => setConfig({ ...config, dueDate: value })}
+                  config={config}
+                  label="Date du terme"
                 />
                 <p className="text-xs text-slate-500 mt-1">
                   Utilisé pour afficher un indicateur J-/J+ dans la modale de pronostics.
                 </p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200">
+              <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <Calendar size={16} />
+                Format de date
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Format d'affichage des dates
+                  </label>
+                  <select
+                    value={config.dateFormat || 'DD/MM/YYYY'}
+                    onChange={(e) => setConfig({ ...config, dateFormat: e.target.value })}
+                    className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                  >
+                    <option value="DD/MM/YYYY">DD/MM/YYYY (26/05/2026) - Format français</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY (05/26/2026) - Format américain</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD (2026-05-26) - Format ISO</option>
+                    <option value="DD MMM YYYY">DD MMM YYYY (26 mai 2026) - Format long</option>
+                    <option value="DD MMMM YYYY">DD MMMM YYYY (26 mai 2026) - Format très long</option>
+                    <option value="DD/MM/YY">DD/MM/YY (26/05/26) - Format court</option>
+                  </select>
+                  <p className="text-xs text-slate-500 mt-2">
+                    <span className="font-medium">Aperçu :</span>{' '}
+                    <span className="text-purple-600 font-semibold">
+                      {formatDate(new Date(), config.dateFormat as any, config)}
+                    </span>
+                    {' '}({formatDateTime(new Date(), config.dateFormat as any, config)})
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Ce format sera appliqué à toutes les dates affichées dans l'application (pages publiques, modales, listes, etc.)
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -470,7 +506,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <span className="text-xs text-slate-400">
-                        {new Date(vote.timestamp).toLocaleString('fr-FR')}
+                        {formatDateTime(new Date(vote.timestamp), undefined, config)}
                       </span>
                     </div>
 
@@ -478,7 +514,7 @@ export default function AdminPage() {
                       <div className="ml-11 mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-600">
                         {vote.birthDate && (
                           <div>
-                            <span className="font-medium">Date:</span> {new Date(vote.birthDate).toLocaleDateString('fr-FR')}
+                            <span className="font-medium">Date:</span> {formatDate(vote.birthDate, undefined, config)}
                           </div>
                         )}
                         {vote.birthTime && (

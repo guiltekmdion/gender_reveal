@@ -1,15 +1,7 @@
-import fs from 'fs';
-import path from 'path';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const VOTES_FILE = path.join(DATA_DIR, 'votes.json');
-const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
+/**
+ * Types et interfaces pour le stockage
+ * Exportés pour compatibilité avec le code existant
+ */
 export interface Vote {
   id: number;
   name: string;
@@ -44,89 +36,44 @@ export interface AppConfig {
   actualHeight?: number;
   actualHairColor?: string;
   actualEyeColor?: string;
+  // Date format configuration
+  dateFormat?: string; // Format de date: 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY'
 }
 
-const DEFAULT_CONFIG: AppConfig = {
-  babyName: 'Bébé',
-  parentNames: 'Papa & Maman',
-  girlIcon: 'Crown',
-  boyIcon: 'Gamepad2',
-  girlColor: '#ec4899',
-  boyColor: '#3b82f6',
-  birthListLink: '',
-  dueDate: '',
-  revealDate: '',
-  isRevealed: false,
-  actualGender: null,
-};
+/**
+ * Instance singleton du storage
+ * Utilise le pattern Strategy pour basculer entre FileStorage et DBStorage
+ */
+let storageInstance: ReturnType<typeof import('./storage/interface').getStorage> | null = null;
 
-// Votes operations
-export function getVotes(): Vote[] {
-  try {
-    if (fs.existsSync(VOTES_FILE)) {
-      const data = fs.readFileSync(VOTES_FILE, 'utf-8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error reading votes:', error);
+function getStorageInstance() {
+  if (!storageInstance) {
+    const { getStorage } = require('./storage/interface');
+    storageInstance = getStorage();
   }
-  return [];
+  return storageInstance;
 }
 
-export function saveVotes(votes: Vote[]): void {
-  try {
-    fs.writeFileSync(VOTES_FILE, JSON.stringify(votes, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error saving votes:', error);
-    throw error;
-  }
+/**
+ * Fonctions de compatibilité pour le code existant
+ * Délèguent à l'implémentation de stockage appropriée
+ */
+export function getVotes() {
+  return getStorageInstance().getVotes();
 }
 
 export function addVote(vote: Omit<Vote, 'id' | 'timestamp'>): Vote {
-  const votes = getVotes();
-  const newVote: Vote = {
-    name: vote.name,
-    email: vote.email,
-    choice: vote.choice,
-    birthDate: vote.birthDate,
-    birthTime: vote.birthTime,
-    weight: vote.weight,
-    height: vote.height,
-    hairColor: vote.hairColor,
-    eyeColor: vote.eyeColor,
-    id: Date.now(),
-    timestamp: Date.now(),
-  };
-  votes.unshift(newVote);
-  saveVotes(votes);
-  return newVote;
+  return getStorageInstance().addVote(vote);
 }
 
 export function clearVotes(): void {
-  saveVotes([]);
+  return getStorageInstance().clearVotes();
 }
 
-// Config operations
 export function getConfig(): AppConfig {
-  try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const data = fs.readFileSync(CONFIG_FILE, 'utf-8');
-      return { ...DEFAULT_CONFIG, ...JSON.parse(data) };
-    }
-  } catch (error) {
-    console.error('Error reading config:', error);
-  }
-  return DEFAULT_CONFIG;
+  return getStorageInstance().getConfig();
 }
 
 export function saveConfig(config: Partial<AppConfig>): AppConfig {
-  try {
-    const currentConfig = getConfig();
-    const newConfig = { ...currentConfig, ...config };
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(newConfig, null, 2), 'utf-8');
-    return newConfig;
-  } catch (error) {
-    console.error('Error saving config:', error);
-    throw error;
-  }
+  return getStorageInstance().saveConfig(config);
 }

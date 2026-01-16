@@ -4,6 +4,55 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.1.0] - 2025-12-26
+
+### 🗄️ Ajouté (Migration Base de Données)
+
+#### Support SQLite pour Usage Long Terme
+Migration du POC vers une application production-ready avec base de données :
+
+- **Base de données SQLite** avec `better-sqlite3` pour persistance fiable
+- **Pattern Strategy** pour basculer entre FileStorage (JSON) et DBStorage (SQLite)
+- **Système de migrations versionnées** pour gestion des schémas
+- **Script de migration automatique** (`npm run migrate:to-db`) pour importer les données JSON existantes
+- **Volume Docker persistant** garantissant la sauvegarde des données
+- **Transactions ACID** pour garantir l'intégrité des données
+- **Index optimisés** sur timestamp et choice pour performances
+
+#### Améliorations Techniques
+
+- **Couche d'abstraction** `IStorage` pour faciliter les futures migrations
+- **Gestion d'erreurs améliorée** avec classes d'erreurs personnalisées
+- **Tests de stockage** (`npm run test:storage`) pour valider DBStorage et migrations
+- **Documentation complète** dans `docs/MIGRATION.md`
+
+#### Configuration
+
+- Variable d'environnement `STORAGE_TYPE` (file|sqlite) pour choisir le stockage
+- Variable `DATABASE_PATH` pour personnaliser l'emplacement de la base
+- Compatibilité ascendante : par défaut `STORAGE_TYPE=file` (JSON)
+
+### 📚 Documentation
+
+- **[MIGRATION.md](docs/MIGRATION.md)** - Guide complet de migration JSON → SQLite
+- README mis à jour avec instructions de configuration SQLite
+- Variables d'environnement documentées dans `.env.example`
+
+### 🔧 Modifié
+
+- `lib/storage.ts` refactorisé pour utiliser le pattern Strategy
+- `docker-compose.yml` mis à jour avec variables d'environnement SQLite
+- `package.json` avec nouvelles dépendances et scripts
+
+### ⚠️ Notes de Migration
+
+- **Migration optionnelle** : l'application fonctionne toujours avec JSON par défaut
+- **Pas de breaking changes** : compatibilité ascendante maintenue
+- **Migration progressive** : les deux systèmes peuvent coexister
+- **Volume Docker requis** : pour persistance de la base SQLite
+
+---
+
 ## [2.0.0] - 2025-12-26
 
 ### 🎨 Ajouté (Major Features)

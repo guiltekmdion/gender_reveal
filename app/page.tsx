@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Baby, Star, PartyPopper, Trophy, ExternalLink, X, Mail } from 'lucide-react';
 import Link from 'next/link';
 import BabyAvatar from '@/components/BabyAvatar';
+import DatePicker from '@/components/DatePicker';
+import { formatDate, formatDateTime } from '@/lib/date-utils';
 
 interface Vote {
   id: number;
@@ -435,7 +437,7 @@ export default function Home() {
                     </div>
                   </div>
                   <span className="text-xs text-slate-300 font-medium">
-                    {new Date(vote.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    {formatDateTime(new Date(vote.timestamp), undefined, config)}
                   </span>
                 </div>
               ))
@@ -507,19 +509,17 @@ export default function Home() {
             <div className="space-y-4 max-h-96 overflow-y-auto px-1">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Date de naissance
-                  </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                    onChange={(value) => setBirthDate(value)}
+                    config={config}
+                    label="Date de naissance"
+                    required
                   />
                   {dueDateObj && (
                     <div className="mt-1 text-[11px] text-slate-500">
                       <p>
-                        Terme: <span className="font-medium text-slate-600">{dueDateObj.toLocaleDateString('fr-FR')}</span>
+                        Terme: <span className="font-medium text-slate-600">{formatDate(dueDateObj, undefined, config)}</span>
                       </p>
                       {birthDateObj && (
                         <p>

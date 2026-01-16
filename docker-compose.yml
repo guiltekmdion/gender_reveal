@@ -7,6 +7,8 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-key}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - STORAGE_TYPE=${STORAGE_TYPE:-file}
+      - DATABASE_PATH=${DATABASE_PATH:-./data/gender_reveal.db}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
