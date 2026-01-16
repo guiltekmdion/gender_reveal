@@ -18,6 +18,7 @@ const DEFAULT_CONFIG: AppConfig = {
   actualGender: null,
   dateFormat: 'DD/MM/YYYY',
   voteUrl: '',
+  tvMode: false,
 };
 
 /**

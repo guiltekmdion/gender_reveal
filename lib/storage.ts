@@ -40,6 +40,8 @@ export interface AppConfig {
   dateFormat?: string; // Format de date: 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY'
   // Vote URL for QR code
   voteUrl?: string; // URL pour voter (affichée en QR code)
+  // TV Mode for 4K display
+  tvMode?: boolean; // Mode TV optimisé pour affichage 4K
 }
 
 /**

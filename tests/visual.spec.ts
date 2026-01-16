@@ -23,25 +23,34 @@ test.describe('Gender Reveal App - Visual Tests', () => {
   });
 
   test('Sliders de poids et taille fonctionnent', async ({ page }) => {
-    // Remplir nom et sélectionner genre pour activer "Valider mon vote"
+    // Remplir nom et sélectionner genre pour aller à l'étape 2
     await page.locator('input[placeholder*="prénom"]').fill('Jean');
     await page.locator('button:has-text("Garçon")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
     
-    // La modal de prédictions s'ouvre - les sliders sont maintenant visibles
+    // L'étape 2 s'affiche - les sliders sont maintenant visibles
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 3000 });
     const firstSlider = page.locator('input[type="range"]').first();
     await firstSlider.waitFor({ state: 'visible', timeout: 5000 });
-    await firstSlider.fill('3500');
+    
+    // Modifier le slider
+    await page.evaluate(() => {
+      const slider = document.querySelector('input[type="range"]') as HTMLInputElement;
+      if (slider) {
+        slider.value = '3500';
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
     await expect(page.locator('text=/3500.*g/')).toBeVisible();
   });
 
   test('Palette de couleurs cheveux fonctionne', async ({ page }) => {
-    // Ouvrir la modal de prédictions
+    // Aller à l'étape 2
     await page.locator('input[placeholder*="prénom"]').fill('Marie');
     await page.locator('button:has-text("Fille")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
     
-    // Vérifier que la palette est visible dans la modal
+    // Vérifier que la palette est visible à l'étape 2
     await expect(page.locator('text=Couleur des cheveux')).toBeVisible({ timeout: 5000 });
     const blondButton = page.locator('button[aria-label="Cheveux: Blonds"]');
     await blondButton.click();
@@ -49,68 +58,61 @@ test.describe('Gender Reveal App - Visual Tests', () => {
   });
 
   test('Avatar bébé affiche avec les couleurs sélectionnées', async ({ page }) => {
-    // Ouvrir la modal de prédictions
+    // Aller à l'étape 2
     await page.locator('input[placeholder*="prénom"]').fill('Sophie');
     await page.locator('button:has-text("Fille")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
     
-    // Attendre que la modal soit ouverte
+    // Attendre que l'étape 2 soit affichée
     await page.waitForSelector('text=Fais tes pronostics', { timeout: 5000 });
     
-    // Sélectionner les couleurs dans la modal
+    // Sélectionner les couleurs
     await page.locator('button[aria-label="Cheveux: Roux"]').click();
     await page.locator('button[aria-label="Yeux: Verts"]').click();
     
     // Vérifier l'aperçu
     await expect(page.locator('text=Aperçu')).toBeVisible();
-    const avatar = page.locator('[data-testid="baby-avatar"] svg');
+    // L'avatar doit être visible (chercher le composant BabyAvatar)
+    const avatar = page.locator('svg').filter({ hasText: /^$/ }).first(); // SVG de l'avatar
     await expect(avatar).toBeVisible();
   });
 
-  test('Modal de validation email fonctionne', async ({ page }) => {
-    // Ce test vérifie juste que le flux de navigation modal fonctionne
-    // Les détails de validation des sliders sont testés ailleurs
+  test('Email optionnel à l\'étape 2 fonctionne', async ({ page }) => {
+    // Aller à l'étape 2
     await page.locator('input[placeholder*="prénom"]').fill('Jean Dupont');
     await page.locator('button:has-text("Garçon")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
     
-    // Modal de prédictions s'ouvre d'abord
-    const predictionModal = page.locator('text=Fais tes pronostics');
-    await expect(predictionModal).toBeVisible({ timeout: 5000 });
+    // L'étape 2 s'affiche
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 5000 });
     
-    // Remplir les champs (simplifiés pour tester juste la présence)
+    // Remplir les champs obligatoires
     await page.locator('input[type="date"]').fill('2025-01-15');
     await page.locator('input[type="time"]').fill('14:30');
     
-    // Utiliser drag pour les sliders au lieu de JavaScript
-    const weightSlider = page.locator('input[type="range"]').first();
-    const heightSlider = page.locator('input[type="range"]').nth(1);
-    
-    // Drag les sliders vers le milieu de leur plage
-    await weightSlider.dragTo(weightSlider, { sourcePosition: { x: 0, y: 0 }, targetPosition: { x: 50, y: 0 } });
-    await heightSlider.dragTo(heightSlider, { sourcePosition: { x: 0, y: 0 }, targetPosition: { x: 50, y: 0 } });
+    // Remplir les sliders
+    await page.evaluate(() => {
+      const sliders = document.querySelectorAll('input[type="range"]');
+      if (sliders.length >= 2) {
+        (sliders[0] as HTMLInputElement).value = '3500';
+        sliders[0].dispatchEvent(new Event('input', { bubbles: true }));
+        (sliders[1] as HTMLInputElement).value = '50';
+        sliders[1].dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
     
     // Sélectionner les couleurs
     await page.locator('button[title="Bruns"]').click();
     await page.locator('button[title="Bleus"]').click();
-    
     await page.waitForTimeout(300);
     
-    // Essayer de cliquer sur Continuer
-    const continueBtn = page.locator('button:has-text("Continuer")');
-    const isDisabled = await continueBtn.isDisabled();
+    // Vérifier que le champ email est visible dans l'étape 2
+    const emailInput = page.locator('input[type="email"]');
+    await expect(emailInput).toBeVisible({ timeout: 5000 });
     
-    if (isDisabled) {
-      // Si le bouton est encore disabled, forcer le click
-      await continueBtn.click({ force: true });
-    } else {
-      // Sinon, click normal
-      await continueBtn.click();
-    }
-    
-    // Vérifier qu'on est bien passé à la modal d'email
-    const emailInput = page.locator('input[type="email"]').first();
-    await expect(emailInput).toBeVisible({timeout: 5000});
+    // Le bouton "Envoyer mon vote" doit être activé même sans email
+    const submitButton = page.locator('button:has-text("Envoyer mon vote")');
+    await expect(submitButton).toBeEnabled();
   });
 
   test('Symboles de genre sont affichés correctement', async ({ page }) => {

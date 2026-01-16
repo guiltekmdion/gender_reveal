@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Baby, Star, PartyPopper, Trophy, ExternalLink, X, Mail } from 'lucide-react';
+import { Baby, Star, PartyPopper, Trophy, ExternalLink, X, Mail, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import BabyAvatar from '@/components/BabyAvatar';
 import DatePicker from '@/components/DatePicker';
+import StepIndicator from '@/components/StepIndicator';
 import { formatDate, formatDateTime } from '@/lib/date-utils';
 
 interface Vote {
@@ -53,9 +54,10 @@ export default function Home() {
   const [eyeColor, setEyeColor] = useState('');
   
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showPredictionsModal, setShowPredictionsModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Nom+Choix, 2: Prédictions
   const [loading, setLoading] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Baby-friendly ranges for sliders (UI only; API validation remains wider)
   const WEIGHT_MIN = 500;
@@ -96,6 +98,55 @@ export default function Home() {
   const dueDateObj = parseISODate(config.dueDate || '');
   const birthDateObj = parseISODate(birthDate);
   const daysFromDueDate = (a: Date, b: Date) => Math.round((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Sauvegarde automatique dans localStorage
+  useEffect(() => {
+    if (name || selectedChoice || email || birthDate || birthTime || weight || height || hairColor || eyeColor) {
+      const draft = {
+        name,
+        choice: selectedChoice,
+        email,
+        birthDate,
+        birthTime,
+        weight: weightTouched ? weight : '',
+        height: heightTouched ? height : '',
+        hairColor,
+        eyeColor,
+      };
+      localStorage.setItem('vote_draft', JSON.stringify(draft));
+    }
+  }, [name, selectedChoice, email, birthDate, birthTime, weight, weightTouched, height, heightTouched, hairColor, eyeColor]);
+
+  // Récupération au chargement
+  useEffect(() => {
+    const saved = localStorage.getItem('vote_draft');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.name) setName(parsed.name);
+        if (parsed.choice) setSelectedChoice(parsed.choice);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.birthDate) setBirthDate(parsed.birthDate);
+        if (parsed.birthTime) setBirthTime(parsed.birthTime);
+        if (parsed.weight) {
+          setWeight(parsed.weight);
+          setWeightTouched(true);
+        }
+        if (parsed.height) {
+          setHeight(parsed.height);
+          setHeightTouched(true);
+        }
+        if (parsed.hairColor) setHairColor(parsed.hairColor);
+        if (parsed.eyeColor) setEyeColor(parsed.eyeColor);
+        // Restaurer l'étape si des données existent
+        if (parsed.name && parsed.choice) {
+          setCurrentStep(2);
+        }
+      } catch (e) {
+        console.error('Error loading draft:', e);
+      }
+    }
+  }, []);
 
   // Load votes and config from API
   useEffect(() => {
@@ -148,29 +199,62 @@ export default function Home() {
   const girlPercent = totalVotes === 0 ? 50 : Math.round((girlVotes / totalVotes) * 100);
   const boyPercent = totalVotes === 0 ? 50 : Math.round((boyVotes / totalVotes) * 100);
 
-  const handleVoteClick = () => {
-    if (!name.trim()) {
-      alert("Hé ! N'oublie pas de mettre ton prénom !");
-      return;
+  // Validation par étape
+  const validateStep = (step: number): boolean => {
+    if (step === 1) {
+      return !!(name.trim() && selectedChoice);
     }
-    if (!selectedChoice) {
-      alert("Choisis ton équipe (Fille ou Garçon) !");
-      return;
+    if (step === 2) {
+      return !!(birthDate && birthTime && weight && height && hairColor && eyeColor);
     }
-    
-    // Show predictions modal first
-    setShowPredictionsModal(true);
-    
-    // Préremplir la date de naissance avec la date du terme si elle existe
-    if (dueDateObj && !birthDate) {
-      const year = dueDateObj.getFullYear();
-      const month = String(dueDateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dueDateObj.getDate()).padStart(2, '0');
-      setBirthDate(`${year}-${month}-${day}`);
+    return true; // Étape 3 (email) est optionnelle
+  };
+
+  // Scroll intelligent vers input actif quand clavier s'ouvre
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  };
+
+  // Navigation entre étapes
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      // Préremplir la date de naissance avec la date du terme si on passe à l'étape 2
+      if (currentStep === 1 && dueDateObj && !birthDate) {
+        const year = dueDateObj.getFullYear();
+        const month = String(dueDateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dueDateObj.getDate()).padStart(2, '0');
+        setBirthDate(`${year}-${month}-${day}`);
+      }
+      setCurrentStep(prev => Math.min(prev + 1, 3));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (currentStep === 1) {
+        if (!name.trim()) {
+          alert("Hé ! N'oublie pas de mettre ton prénom !");
+        } else if (!selectedChoice) {
+          alert("Choisis ton équipe (Fille ou Garçon) !");
+        }
+      } else if (currentStep === 2) {
+        alert("Tous les champs sont obligatoires pour continuer");
+      }
     }
   };
 
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleVoteClick = () => {
+    nextStep();
+  };
+
   const handleSubmitVote = async (skipEmail: boolean = false) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
     try {
       const voteData: { 
         name: string; 
@@ -221,19 +305,27 @@ export default function Home() {
         setHeightTouched(false);
         setHairColor('');
         setEyeColor('');
-        setShowEmailModal(false);
-        setShowPredictionsModal(false);
+        setCurrentStep(1);
+        setSubmitError(null);
         setShowConfetti(true);
+        
+        // Nettoyer le localStorage après soumission réussie
+        localStorage.removeItem('vote_draft');
         
         // Reset confetti animation
         setTimeout(() => setShowConfetti(false), 3000);
       } else {
         const errorData = await res.json();
-        alert(errorData.error || "Erreur lors de l'enregistrement du vote");
+        const errorMessage = errorData.error || "Erreur lors de l'enregistrement du vote";
+        setSubmitError(errorMessage);
+        // Les données sont conservées dans le state, pas besoin de les restaurer
       }
     } catch (error) {
       console.error('Error submitting vote:', error);
-      alert("Erreur lors de l'enregistrement du vote");
+      setSubmitError("Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
+      // Les données sont conservées dans le state
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -279,7 +371,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-purple-200 text-slate-800 pb-12">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-purple-200 text-slate-800 pb-24">
       
       {/* Header Festif */}
       <div className="bg-white shadow-sm p-4 sticky top-0 z-10 text-center border-b border-slate-100">
@@ -332,80 +424,437 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Zone de Vote */}
+        {/* Zone de Vote avec étapes */}
         <div className="bg-white rounded-3xl shadow-lg p-6 space-y-6 border border-slate-100">
-          <div className="text-center space-y-2">
-            <h2 className="text-lg font-bold text-slate-700">À toi de jouer !</h2>
-            <input 
-              type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ton prénom..." 
-              className="w-full text-center text-lg font-medium border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
-            />
-          </div>
+          {/* Indicateur de progression */}
+          {currentStep > 1 && (
+            <div className="mb-4">
+              <StepIndicator currentStep={currentStep} totalSteps={3} />
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Bouton Fille */}
-            <button
-              onClick={() => setSelectedChoice('girl')}
-              className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2
-                ${selectedChoice === 'girl' 
-                  ? 'border-pink-500 bg-pink-50 shadow-pink-200 shadow-lg scale-105' 
-                  : 'border-slate-100 hover:border-pink-200 bg-white hover:bg-pink-50 text-slate-400 grayscale hover:grayscale-0'
-                }`}
-            >
-              <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <div className="text-3xl font-bold leading-none">♀</div>
+          {/* Étape 1 : Nom + Choix */}
+          {currentStep === 1 && (
+            <div className="space-y-6 animate-in">
+              <div className="text-center space-y-2">
+                <h2 className="text-lg font-bold text-slate-700">À toi de jouer !</h2>
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onFocus={handleInputFocus}
+                  placeholder="Ton prénom..." 
+                  inputMode="text"
+                  autoComplete="name"
+                  className="w-full text-center text-base font-medium border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[48px] focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
+                />
               </div>
-              <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
-                Fille
-              </span>
-              {selectedChoice === 'girl' && (
-                <div className="absolute top-2 right-2 animate-bounce">
-                  <Star size={16} className="text-pink-400" fill="currentColor" />
-                </div>
-              )}
-            </button>
 
-            {/* Bouton Garçon */}
-            <button
-              onClick={() => setSelectedChoice('boy')}
-              className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2
-                ${selectedChoice === 'boy' 
-                  ? 'border-blue-500 bg-blue-50 shadow-blue-200 shadow-lg scale-105' 
-                  : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-400 grayscale hover:grayscale-0'
-                }`}
-            >
-              <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <div className="text-3xl font-bold leading-none">♂</div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Bouton Fille */}
+                <button
+                  onClick={() => setSelectedChoice('girl')}
+                  className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2 min-h-[120px] active:scale-95
+                    ${selectedChoice === 'girl' 
+                      ? 'border-pink-500 bg-pink-50 shadow-pink-200 shadow-lg scale-105' 
+                      : 'border-slate-100 hover:border-pink-200 bg-white hover:bg-pink-50 text-slate-400 grayscale hover:grayscale-0'
+                    }`}
+                >
+                  <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none">♀</div>
+                  </div>
+                  <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
+                    Fille
+                  </span>
+                  {selectedChoice === 'girl' && (
+                    <div className="absolute top-2 right-2 animate-bounce">
+                      <Star size={16} className="text-pink-400" fill="currentColor" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Bouton Garçon */}
+                <button
+                  onClick={() => setSelectedChoice('boy')}
+                  className={`relative group overflow-hidden rounded-2xl p-4 transition-all duration-300 border-4 flex flex-col items-center gap-2 min-h-[120px] active:scale-95
+                    ${selectedChoice === 'boy' 
+                      ? 'border-blue-500 bg-blue-50 shadow-blue-200 shadow-lg scale-105' 
+                      : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-400 grayscale hover:grayscale-0'
+                    }`}
+                >
+                  <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none">♂</div>
+                  </div>
+                  <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
+                    Garçon
+                  </span>
+                  {selectedChoice === 'boy' && (
+                    <div className="absolute top-2 right-2 animate-bounce">
+                      <Star size={16} className="text-blue-400" fill="currentColor" />
+                    </div>
+                  )}
+                </button>
               </div>
-              <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
-                Garçon
-              </span>
-              {selectedChoice === 'boy' && (
-                <div className="absolute top-2 right-2 animate-bounce">
-                  <Star size={16} className="text-blue-400" fill="currentColor" />
-                </div>
-              )}
-            </button>
-          </div>
+            </div>
+          )}
 
-          <button
-            onClick={handleVoteClick}
-            disabled={!name || !selectedChoice}
-            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transform transition-all active:scale-95 flex items-center justify-center gap-2
-              ${(!name || !selectedChoice) 
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1'
-              }`}
-          >
-            {showConfetti ? <PartyPopper className="animate-spin" /> : <Trophy size={20} />}
-            Valider mon vote !
-          </button>
+          {/* Étape 2 : Prédictions */}
+          {currentStep === 2 && (
+            <div className="space-y-4 animate-in">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+                  <Baby className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                  Fais tes pronostics ! 🎯
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Tous les champs sont obligatoires pour continuer
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <DatePicker
+                      value={birthDate}
+                      onChange={(value) => setBirthDate(value)}
+                      config={config}
+                      label="Date de naissance"
+                      required
+                    />
+                    {dueDateObj && (
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        <p>
+                          Terme: <span className="font-medium text-slate-600">{formatDate(dueDateObj, undefined, config)}</span>
+                        </p>
+                        {birthDateObj && (
+                          <p>
+                            {(() => {
+                              const delta = daysFromDueDate(birthDateObj, dueDateObj);
+                              if (delta === 0) return 'Indication: Jour J (terme)';
+                              if (delta < 0) return `Indication: J${delta} (${Math.abs(delta)} jour(s) avant)`;
+                              return `Indication: J+${delta} (${delta} jour(s) après)`;
+                            })()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Heure de naissance
+                    </label>
+                    <input
+                      type="time"
+                      value={birthTime}
+                      onChange={(e) => setBirthTime(e.target.value)}
+                      onFocus={handleInputFocus}
+                      className="w-full text-base border-2 border-slate-200 rounded-lg px-4 py-3 min-h-[48px] focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-medium text-slate-700">
+                        Poids (grammes)
+                      </label>
+                      {(weightTouched || weight) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWeight('');
+                            setWeightTouched(false);
+                          }}
+                          className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] px-2"
+                        >
+                          Effacer
+                        </button>
+                      )}
+                    </div>
+                    <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all min-h-[64px]">
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-bold text-slate-700">
+                          {weightTouched ? `${weight}g` : <span className="text-slate-400 font-medium text-base">Non renseigné</span>}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {WEIGHT_MIN}–{WEIGHT_MAX}g
+                        </p>
+                      </div>
+                      <input
+                        type="range"
+                        min={WEIGHT_MIN}
+                        max={WEIGHT_MAX}
+                        step={WEIGHT_STEP}
+                        value={weightTouched ? weight : String(WEIGHT_DEFAULT)}
+                        onChange={(e) => {
+                          setWeightTouched(true);
+                          setWeight(e.target.value);
+                        }}
+                        className="w-full mt-2 accent-purple-600 h-2"
+                        aria-label="Poids du bébé en grammes"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-medium text-slate-700">
+                        Taille (cm)
+                      </label>
+                      {(heightTouched || height) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHeight('');
+                            setHeightTouched(false);
+                          }}
+                          className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] px-2"
+                        >
+                          Effacer
+                        </button>
+                      )}
+                    </div>
+                    <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all min-h-[64px]">
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-bold text-slate-700">
+                          {heightTouched ? `${height}cm` : <span className="text-slate-400 font-medium text-base">Non renseigné</span>}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {HEIGHT_MIN}–{HEIGHT_MAX}cm
+                        </p>
+                      </div>
+                      <input
+                        type="range"
+                        min={HEIGHT_MIN}
+                        max={HEIGHT_MAX}
+                        step={HEIGHT_STEP}
+                        value={heightTouched ? height : String(HEIGHT_DEFAULT)}
+                        onChange={(e) => {
+                          setHeightTouched(true);
+                          setHeight(e.target.value);
+                        }}
+                        className="w-full mt-2 accent-purple-600 h-2"
+                        aria-label="Taille du bébé en centimètres"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-700">
+                      Couleur des cheveux
+                    </label>
+                    {hairColor && (
+                      <button
+                        type="button"
+                        onClick={() => setHairColor('')}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] px-2"
+                      >
+                        Effacer
+                      </button>
+                    )}
+                  </div>
+                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {hairColor ? hairColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                      </p>
+                      <p className="text-[10px] text-slate-400">Choisis une couleur</p>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {hairOptions.map((opt) => {
+                        const isSelected = hairColor === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setHairColor(opt.value)}
+                            className={`h-12 w-12 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
+                              ${isSelected
+                                ? 'border-white ring-2 ring-purple-400 shadow'
+                                : 'border-slate-200 hover:border-slate-300'}
+                            `}
+                            style={{ backgroundColor: opt.color }}
+                            aria-label={`Cheveux: ${opt.value}`}
+                            aria-pressed={isSelected}
+                            title={opt.value}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-700">
+                      Couleur des yeux
+                    </label>
+                    {eyeColor && (
+                      <button
+                        type="button"
+                        onClick={() => setEyeColor('')}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] px-2"
+                      >
+                        Effacer
+                      </button>
+                    )}
+                  </div>
+                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {eyeColor ? eyeColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
+                      </p>
+                      <p className="text-[10px] text-slate-400">Choisis une couleur</p>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {eyeOptions.map((opt) => {
+                        const isSelected = eyeColor === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setEyeColor(opt.value)}
+                            className={`h-12 w-12 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
+                              ${isSelected
+                                ? 'border-white ring-2 ring-purple-400 shadow'
+                                : 'border-slate-200 hover:border-slate-300'}
+                            `}
+                            style={{ backgroundColor: opt.color }}
+                            aria-label={`Yeux: ${opt.value}`}
+                            aria-pressed={isSelected}
+                            title={opt.value}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Aperçu</p>
+                    <p className="text-[10px] text-slate-400">{selectedChoice === 'girl' ? 'Fille' : selectedChoice === 'boy' ? 'Garçon' : '—'}</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <BabyAvatar 
+                      hairColor={selectedHairHex} 
+                      eyeColor={selectedEyeHex} 
+                      gender={selectedChoice || undefined}
+                      size={96}
+                    />
+                  </div>
+                  <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+                    <span>
+                      Cheveux: <span className="font-medium text-slate-600">{hairColor || '—'}</span>
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span>
+                      Yeux: <span className="font-medium text-slate-600">{eyeColor || '—'}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Email intégré dans l'étape 2 */}
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-2">
+                      <Mail className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">
+                      Reste informé(e) ! 📧
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      Laisse-nous ton email pour recevoir des nouvelles (optionnel)
+                    </p>
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={handleInputFocus}
+                    placeholder="ton-email@exemple.com"
+                    inputMode="email"
+                    autoComplete="email"
+                    className="w-full text-center text-base border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[48px] focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Liste des récents */}
+        {/* Message d'erreur si soumission échoue */}
+        {submitError && currentStep === 2 && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 space-y-3 animate-in">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <X className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800 mb-1">Erreur lors de l'envoi</p>
+                <p className="text-sm text-red-600">{submitError}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleSubmitVote(!email.trim())}
+              disabled={isSubmitting}
+              className="w-full min-h-[44px] bg-red-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Envoi en cours...' : 'Réessayer'}
+            </button>
+          </div>
+        )}
+
+        {/* Sticky footer pour boutons d'action */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 -mx-4 shadow-lg z-10">
+          <div className="flex gap-3 max-w-md mx-auto">
+            {currentStep > 1 && (
+              <button
+                onClick={prevStep}
+                disabled={isSubmitting}
+                className="flex-1 min-h-[48px] bg-slate-100 text-slate-600 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowLeft size={18} />
+                Retour
+              </button>
+            )}
+            <button
+              onClick={currentStep < 2 ? nextStep : () => handleSubmitVote(!email.trim())}
+              disabled={!validateStep(currentStep) || isSubmitting}
+              className={`flex-1 min-h-[48px] py-3 rounded-xl font-bold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2
+                ${!validateStep(currentStep) || isSubmitting
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-indigo-200 hover:shadow-indigo-300'
+                }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Envoi...
+                </>
+              ) : currentStep < 2 ? (
+                <>
+                  <Trophy size={18} />
+                  Suivant
+                </>
+              ) : (
+                <>
+                  <PartyPopper size={18} />
+                  Envoyer mon vote
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Liste des récents - seulement à l'étape 1 */}
+        {currentStep === 1 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
             <h3 className="font-bold text-slate-500 text-sm uppercase tracking-wider">Derniers pronostics</h3>
@@ -444,9 +893,10 @@ export default function Home() {
             )}
           </div>
         </div>
+        )}
 
         {/* Birth List Link - Moved here after votes */}
-        {config.birthListLink && (
+        {currentStep === 1 && config.birthListLink && (
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
             <div className="text-center space-y-3">
               <p className="text-sm font-medium text-slate-600">
@@ -465,367 +915,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Footer actions */}
-        <div className="pt-8 pb-4 text-center space-y-2">
-          <Link 
-            href="/results"
-            className="text-sm text-purple-600 hover:text-purple-700 transition-colors block font-medium"
-          >
-            📊 Voir les statistiques
-          </Link>
-          <Link 
-            href="/admin"
-            className="text-xs text-slate-300 hover:text-slate-400 transition-colors block"
-          >
-            Administration
-          </Link>
-        </div>
+        {/* Footer actions - seulement à l'étape 1 */}
+        {currentStep === 1 && (
+          <div className="pt-8 pb-4 text-center space-y-2">
+            <Link 
+              href="/results"
+              className="text-sm text-purple-600 hover:text-purple-700 transition-colors block font-medium"
+            >
+              📊 Voir les statistiques
+            </Link>
+            <Link 
+              href="/admin"
+              className="text-xs text-slate-300 hover:text-slate-400 transition-colors block"
+            >
+              Administration
+            </Link>
+          </div>
+        )}
 
       </div>
-
-      {/* Predictions Modal */}
-      {showPredictionsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative animate-in my-8">
-            <button
-              onClick={() => setShowPredictionsModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X size={24} />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-                <Baby className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">
-                Fais tes pronostics ! 🎯
-              </h3>
-              <p className="text-sm text-slate-500">
-                Tous les champs sont obligatoires pour continuer
-              </p>
-            </div>
-
-            <div className="space-y-4 max-h-96 overflow-y-auto px-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <DatePicker
-                    value={birthDate}
-                    onChange={(value) => setBirthDate(value)}
-                    config={config}
-                    label="Date de naissance"
-                    required
-                  />
-                  {dueDateObj && (
-                    <div className="mt-1 text-[11px] text-slate-500">
-                      <p>
-                        Terme: <span className="font-medium text-slate-600">{formatDate(dueDateObj, undefined, config)}</span>
-                      </p>
-                      {birthDateObj && (
-                        <p>
-                          {(() => {
-                            const delta = daysFromDueDate(birthDateObj, dueDateObj);
-                            if (delta === 0) return 'Indication: Jour J (terme)';
-                            if (delta < 0) return `Indication: J${delta} (${Math.abs(delta)} jour(s) avant)`;
-                            return `Indication: J+${delta} (${delta} jour(s) après)`;
-                          })()}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Heure de naissance
-                  </label>
-                  <input
-                    type="time"
-                    value={birthTime}
-                    onChange={(e) => setBirthTime(e.target.value)}
-                    className="w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-medium text-slate-700">
-                      Poids (grammes)
-                    </label>
-                    {(weightTouched || weight) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWeight('');
-                          setWeightTouched(false);
-                        }}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        Effacer
-                      </button>
-                    )}
-                  </div>
-                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-700">
-                        {weightTouched ? `${weight}g` : <span className="text-slate-400 font-medium">Non renseigné</span>}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {WEIGHT_MIN}–{WEIGHT_MAX}g
-                      </p>
-                    </div>
-                    <input
-                      type="range"
-                      min={WEIGHT_MIN}
-                      max={WEIGHT_MAX}
-                      step={WEIGHT_STEP}
-                      value={weightTouched ? weight : String(WEIGHT_DEFAULT)}
-                      onChange={(e) => {
-                        setWeightTouched(true);
-                        setWeight(e.target.value);
-                      }}
-                      className="w-full mt-2 accent-purple-600"
-                      aria-label="Poids du bébé en grammes"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-medium text-slate-700">
-                      Taille (cm)
-                    </label>
-                    {(heightTouched || height) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setHeight('');
-                          setHeightTouched(false);
-                        }}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        Effacer
-                      </button>
-                    )}
-                  </div>
-                  <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 bg-white focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-700">
-                        {heightTouched ? `${height}cm` : <span className="text-slate-400 font-medium">Non renseigné</span>}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {HEIGHT_MIN}–{HEIGHT_MAX}cm
-                      </p>
-                    </div>
-                    <input
-                      type="range"
-                      min={HEIGHT_MIN}
-                      max={HEIGHT_MAX}
-                      step={HEIGHT_STEP}
-                      value={heightTouched ? height : String(HEIGHT_DEFAULT)}
-                      onChange={(e) => {
-                        setHeightTouched(true);
-                        setHeight(e.target.value);
-                      }}
-                      className="w-full mt-2 accent-purple-600"
-                      aria-label="Taille du bébé en centimètres"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-slate-700">
-                    Couleur des cheveux
-                  </label>
-                  {hairColor && (
-                    <button
-                      type="button"
-                      onClick={() => setHairColor('')}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      Effacer
-                    </button>
-                  )}
-                </div>
-                <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold text-slate-700">
-                      {hairColor ? hairColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
-                    </p>
-                    <p className="text-[10px] text-slate-400">Choisis une couleur</p>
-                  </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {hairOptions.map((opt) => {
-                      const isSelected = hairColor === opt.value;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setHairColor(opt.value)}
-                          className={
-                            `h-10 w-10 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 ` +
-                            (isSelected
-                              ? 'border-white ring-2 ring-purple-400 shadow'
-                              : 'border-slate-200 hover:border-slate-300')
-                          }
-                          style={{ backgroundColor: opt.color }}
-                          aria-label={`Cheveux: ${opt.value}`}
-                          aria-pressed={isSelected}
-                          title={opt.value}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-slate-700">
-                    Couleur des yeux
-                  </label>
-                  {eyeColor && (
-                    <button
-                      type="button"
-                      onClick={() => setEyeColor('')}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      Effacer
-                    </button>
-                  )}
-                </div>
-                <div className="w-full border-2 border-slate-200 rounded-lg px-3 py-3 bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold text-slate-700">
-                      {eyeColor ? eyeColor : <span className="text-slate-400 font-medium">Non renseigné</span>}
-                    </p>
-                    <p className="text-[10px] text-slate-400">Choisis une couleur</p>
-                  </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {eyeOptions.map((opt) => {
-                      const isSelected = eyeColor === opt.value;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setEyeColor(opt.value)}
-                          className={
-                            `h-10 w-10 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 ` +
-                            (isSelected
-                              ? 'border-white ring-2 ring-purple-400 shadow'
-                              : 'border-slate-200 hover:border-slate-300')
-                          }
-                          style={{ backgroundColor: opt.color }}
-                          aria-label={`Yeux: ${opt.value}`}
-                          aria-pressed={isSelected}
-                          title={opt.value}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Aperçu</p>
-                  <p className="text-[10px] text-slate-400">{selectedChoice === 'girl' ? 'Fille' : selectedChoice === 'boy' ? 'Garçon' : '—'}</p>
-                </div>
-                <div className="flex justify-center">
-                  <BabyAvatar 
-                    hairColor={selectedHairHex} 
-                    eyeColor={selectedEyeHex} 
-                    gender={selectedChoice || undefined}
-                    size={96}
-                  />
-                </div>
-                <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500">
-                  <span>
-                    Cheveux: <span className="font-medium text-slate-600">{hairColor || '—'}</span>
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span>
-                    Yeux: <span className="font-medium text-slate-600">{eyeColor || '—'}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 mt-6">
-              <button
-                onClick={() => setShowEmailModal(true)}
-                disabled={!birthDate || !birthTime || !weight || !height || !hairColor || !eyeColor}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:-translate-y-0"
-              >
-                Continuer
-              </button>
-              
-              <button
-                onClick={() => setShowPredictionsModal(false)}
-                className="w-full bg-slate-100 text-slate-600 py-2 rounded-xl font-medium text-sm hover:bg-slate-200 transition-colors"
-              >
-                Retour
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative animate-in">
-            <button
-              onClick={() => setShowEmailModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X size={24} />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-                <Mail className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">
-                Reste informé(e) ! 📧
-              </h3>
-              <p className="text-sm text-slate-500">
-                Laisse-nous ton email pour recevoir des nouvelles (optionnel)
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ton-email@exemple.com"
-                className="w-full text-center text-base border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
-              />
-
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleSubmitVote(false)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-                >
-                  Envoyer mon vote avec email
-                </button>
-                
-                <button
-                  onClick={() => handleSubmitVote(true)}
-                  className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-                >
-                  Continuer sans email
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confetti Overlay Simple (CSS-based feedback) */}
       {showConfetti && (

@@ -24,6 +24,7 @@ interface AppConfig {
   actualGender?: 'girl' | 'boy' | null;
   dateFormat?: string;
   voteUrl?: string;
+  tvMode?: boolean;
 }
 
 interface Vote {
@@ -454,6 +455,25 @@ export default function AdminPage() {
               <p className="text-xs text-slate-400 mt-1">
                 💡 Vous pouvez mettre n&apos;importe quel lien (normalement la page de vote de votre application)
               </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.tvMode || false}
+                  onChange={(e) => setConfig({ ...config, tvMode: e.target.checked })}
+                  className="w-5 h-5 text-purple-600 border-2 border-slate-300 rounded focus:ring-purple-500 focus:ring-2"
+                />
+                <div className="flex-1">
+                  <span className="block text-sm font-medium text-slate-700">
+                    Mode TV (affichage 4K optimisé)
+                  </span>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Active le mode optimisé pour affichage sur TV 4K avec tailles de police et espacements augmentés. Les statistiques seront automatiquement rafraîchies toutes les 10 secondes.
+                  </p>
+                </div>
+              </label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

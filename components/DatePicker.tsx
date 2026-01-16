@@ -201,14 +201,14 @@ export default function DatePicker({
               onChange={handleDisplayChange}
               onFocus={handleFocus}
               placeholder={placeholder || `Format: ${format}`}
-              className={`w-full text-sm border-2 border-slate-200 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all ${className}`}
+              className={`w-full text-base border-2 border-slate-200 rounded-lg px-4 py-3 pr-10 min-h-[48px] focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all ${className}`}
             />
             
             {/* Icône calendrier cliquable pour ouvrir le date picker natif */}
             <button
               type="button"
               onClick={handleNativePickerClick}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Ouvrir le calendrier"
             >
               <Calendar size={18} />
@@ -234,14 +234,14 @@ export default function DatePicker({
                 value={displayValue}
                 readOnly
                 placeholder="Cliquez sur le calendrier"
-                className={`flex-1 text-sm border-2 border-slate-200 rounded-lg px-3 py-2 pr-10 bg-slate-50 cursor-pointer ${className}`}
+                className={`flex-1 text-base border-2 border-slate-200 rounded-lg px-4 py-3 pr-10 min-h-[48px] bg-slate-50 cursor-pointer ${className}`}
                 onClick={handleNativePickerClick}
               />
               
               <button
                 type="button"
                 onClick={handleNativePickerClick}
-                className="text-slate-400 hover:text-purple-600 transition-colors p-2"
+                className="text-slate-400 hover:text-purple-600 transition-colors p-2 min-w-[48px] min-h-[48px] flex items-center justify-center"
                 aria-label="Ouvrir le calendrier"
               >
                 <Calendar size={18} />

@@ -21,27 +21,29 @@ test.describe('Captures d\'écran pour la documentation', () => {
     await page.screenshot({ path: 'docs/screenshots/03-selection-garcon.png', fullPage: true });
   });
 
-  test('Modal - Prédictions avancées', async ({ page }) => {
+  test('Étape 2 - Prédictions avancées', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
-    // Remplir et ouvrir la modal
+    // Remplir étape 1 et aller à l'étape 2
     await page.locator('input[placeholder*="prénom"]').fill('Sophie Martin');
     await page.locator('button:has-text("Fille")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
     
     // Attendre l'animation
     await page.waitForTimeout(500);
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 3000 });
     await page.screenshot({ path: 'docs/screenshots/04-modal-predictions.png', fullPage: true });
   });
 
-  test('Modal - Prédictions avec couleurs sélectionnées', async ({ page }) => {
+  test('Étape 2 - Prédictions avec couleurs sélectionnées', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
     await page.locator('input[placeholder*="prénom"]').fill('Sophie Martin');
     await page.locator('button:has-text("Fille")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 3000 });
     await page.waitForTimeout(500);
     
     // Sélectionner des couleurs
@@ -50,24 +52,24 @@ test.describe('Captures d\'écran pour la documentation', () => {
     
     // Scroller vers le bas pour voir l'aperçu
     await page.evaluate(() => {
-      const modal = document.querySelector('.overflow-y-auto');
-      if (modal) modal.scrollTop = modal.scrollHeight;
+      window.scrollTo(0, document.body.scrollHeight);
     });
     await page.waitForTimeout(300);
     
     await page.screenshot({ path: 'docs/screenshots/05-modal-predictions-couleurs.png', fullPage: true });
   });
 
-  test('Modal - Email', async ({ page }) => {
+  test('Étape 2 - Email optionnel', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
     await page.locator('input[placeholder*="prénom"]').fill('Marc Dubois');
     await page.locator('button:has-text("Garçon")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 3000 });
     await page.waitForTimeout(500);
     
-    // Remplir tous les champs obligatoires de la modale de prédictions
+    // Remplir tous les champs obligatoires
     await page.locator('input[type="date"]').fill('2025-01-15');
     await page.locator('input[type="time"]').fill('14:30');
     
@@ -77,11 +79,8 @@ test.describe('Captures d\'écran pour la documentation', () => {
       if (sliders.length >= 2) {
         (sliders[0] as HTMLInputElement).value = '3500';
         sliders[0].dispatchEvent(new Event('input', { bubbles: true }));
-        sliders[0].dispatchEvent(new Event('change', { bubbles: true }));
-        
         (sliders[1] as HTMLInputElement).value = '50';
         sliders[1].dispatchEvent(new Event('input', { bubbles: true }));
-        sliders[1].dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
     
@@ -95,8 +94,10 @@ test.describe('Captures d\'écran pour la documentation', () => {
     
     await page.waitForTimeout(300);
     
-    // Cliquer sur Continuer avec force si disabled
-    await page.locator('button:has-text("Continuer")').click({ force: true });
+    // Scroller vers le bas pour voir le champ email
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
     await page.waitForTimeout(500);
     
     await page.screenshot({ path: 'docs/screenshots/06-modal-email.png', fullPage: true });
@@ -121,14 +122,15 @@ test.describe('Captures d\'écran pour la documentation', () => {
     await page.screenshot({ path: 'docs/screenshots/09-mobile-principale.png', fullPage: true });
   });
 
-  test('Mobile - Modal prédictions', async ({ page }) => {
+  test('Mobile - Étape 2 prédictions', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
     await page.locator('input[placeholder*="prénom"]').fill('Alice');
     await page.locator('button:has-text("Fille")').first().click();
-    await page.locator('button:has-text("Valider mon vote")').click();
+    await page.locator('button:has-text("Suivant")').click();
+    await expect(page.locator('text=Fais tes pronostics')).toBeVisible({ timeout: 3000 });
     await page.waitForTimeout(500);
     
     await page.screenshot({ path: 'docs/screenshots/10-mobile-modal.png', fullPage: true });

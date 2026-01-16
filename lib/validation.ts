@@ -6,7 +6,7 @@ export const voteSchema = z.object({
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   choice: z.enum(['girl', 'boy']),
   // Extended predictions
-  birthDate: z.string().optional(),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
   birthTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Format HH:mm requis').optional().or(z.literal('')),
   weight: z.number().min(500).max(10000).optional(),
   height: z.number().min(20).max(100).optional(),
@@ -38,7 +38,9 @@ export const configSchema = z.object({
   // Date format configuration
   dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY']).optional(),
   // Vote URL for QR code
-  voteUrl: z.string().url('URL invalide').optional().or(z.literal(''))
+  voteUrl: z.string().url('URL invalide').optional().or(z.literal('')),
+  // TV Mode for 4K display
+  tvMode: z.boolean().optional()
 });
 
 // Auth validation schema
