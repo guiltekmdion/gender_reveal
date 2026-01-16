@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Lock, Save, Trash2, Eye, LogOut, 
-  Baby, Heart, Settings, Users, Calendar
+  Baby, Heart, Settings, Users, Calendar, Download, QrCode
 } from 'lucide-react';
 import DatePicker from '@/components/DatePicker';
+import QRCode from '@/components/QRCode';
 import { formatDate, formatDateTime } from '@/lib/date-utils';
 
 interface AppConfig {
@@ -21,6 +22,8 @@ interface AppConfig {
   revealDate?: string;
   isRevealed?: boolean;
   actualGender?: 'girl' | 'boy' | null;
+  dateFormat?: string;
+  voteUrl?: string;
 }
 
 interface Vote {
@@ -163,6 +166,95 @@ export default function AdminPage() {
       console.error('Delete error:', error);
       alert('Erreur lors de la suppression');
     }
+  };
+
+  const handleExportCSV = () => {
+    if (votes.length === 0) {
+      alert('Aucun vote à exporter');
+      return;
+    }
+
+    // En-têtes CSV en français
+    const headers = [
+      'Nom',
+      'Email',
+      'Choix',
+      'Date du vote',
+      'Date de naissance prédite',
+      'Heure de naissance prédite',
+      'Poids prédit (g)',
+      'Taille prédite (cm)',
+      'Couleur cheveux prédite',
+      'Couleur yeux prédite'
+    ];
+
+    // Convertir les votes en lignes CSV
+    const rows = votes.map(vote => {
+      // Convertir le choix en français
+      const choiceText = vote.choice === 'girl' ? 'Fille' : 'Garçon';
+      
+      // Formater la date du vote
+      const voteDate = formatDateTime(new Date(vote.timestamp), undefined, config);
+      
+      // Formater la date de naissance prédite si elle existe
+      const birthDateFormatted = vote.birthDate 
+        ? formatDate(vote.birthDate, undefined, config)
+        : '';
+      
+      // Fonction helper pour échapper les valeurs CSV (ajouter des guillemets si nécessaire)
+      const escapeCSV = (value: string | number | undefined): string => {
+        if (value === undefined || value === null || value === '') {
+          return '';
+        }
+        const str = String(value);
+        // Si la valeur contient une virgule, un guillemet ou un saut de ligne, l'entourer de guillemets
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      return [
+        escapeCSV(vote.name),
+        escapeCSV(vote.email),
+        escapeCSV(choiceText),
+        escapeCSV(voteDate),
+        escapeCSV(birthDateFormatted),
+        escapeCSV(vote.birthTime),
+        escapeCSV(vote.weight),
+        escapeCSV(vote.height),
+        escapeCSV(vote.hairColor),
+        escapeCSV(vote.eyeColor)
+      ];
+    });
+
+    // Créer le contenu CSV
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Ajouter le BOM UTF-8 pour Excel
+    const BOM = '\uFEFF';
+    const csvWithBOM = BOM + csvContent;
+
+    // Créer le Blob et télécharger
+    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Nom de fichier avec date
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    link.download = `votes_gender_reveal_${dateStr}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Nettoyer l'URL
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   // Login screen
@@ -345,6 +437,25 @@ export default function AdminPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Lien pour voter (QR code)
+              </label>
+              <input
+                type="url"
+                value={config.voteUrl || ''}
+                onChange={(e) => setConfig({ ...config, voteUrl: e.target.value })}
+                className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                placeholder="https://votre-domaine.com ou https://votre-domaine.com/vote"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Ce lien sera affiché en QR code sur la page de résultats et dans l&apos;admin. Les invités pourront scanner le QR code pour accéder directement à la page de vote.
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                💡 Vous pouvez mettre n&apos;importe quel lien (normalement la page de vote de votre application)
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <DatePicker
@@ -460,6 +571,35 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* QR Code pour voter */}
+        {config.voteUrl && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <QrCode size={20} />
+              QR Code pour voter
+            </h2>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <QRCode value={config.voteUrl} size={200} />
+              <div className="flex-1">
+                <p className="text-sm text-slate-600 mb-2">
+                  Ce QR code permet aux invités d&apos;accéder directement à la page de vote
+                </p>
+                <a
+                  href={config.voteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium underline break-all"
+                >
+                  {config.voteUrl}
+                </a>
+                <p className="text-xs text-slate-500 mt-2">
+                  Le QR code est également affiché sur la page de résultats
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Votes Management */}
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
           <div className="flex items-center justify-between mb-6">
@@ -467,13 +607,22 @@ export default function AdminPage() {
               <Users size={20} />
               Gestion des votes
             </h2>
-            <button
-              onClick={handleClearVotes}
-              className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
-            >
-              <Trash2 size={16} />
-              Tout supprimer
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                <Download size={16} />
+                Exporter en CSV
+              </button>
+              <button
+                onClick={handleClearVotes}
+                className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+              >
+                <Trash2 size={16} />
+                Tout supprimer
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">

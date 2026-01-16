@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp } from 'lucide-react';
+import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import BabyAvatar from '@/components/BabyAvatar';
+import QRCode from '@/components/QRCode';
 import { formatDate, formatDateLong } from '@/lib/date-utils';
 
 interface Vote {
@@ -24,6 +25,7 @@ interface AppConfig {
   babyName?: string;
   parentNames?: string;
   dateFormat?: string;
+  voteUrl?: string;
 }
 
 // Composant Roue de Couleurs - Style Gender Reveal doux
@@ -314,6 +316,32 @@ export default function ResultsPage() {
             />
           </div>
         </div>
+
+        {/* QR Code pour voter */}
+        {config.voteUrl && (
+          <div className="bg-white rounded-3xl shadow-lg overflow-hidden p-6 border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <QrCode size={20} />
+              Scanner pour voter
+            </h2>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <QRCode value={config.voteUrl} size={200} />
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-sm text-slate-600 mb-2">
+                  Scannez ce QR code pour accéder directement à la page de vote
+                </p>
+                <a
+                  href={config.voteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium underline break-all"
+                >
+                  {config.voteUrl}
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Averages */}
         <div className="bg-white rounded-3xl shadow-lg p-6 border border-slate-100">

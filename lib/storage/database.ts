@@ -17,6 +17,7 @@ const DEFAULT_CONFIG: AppConfig = {
   isRevealed: false,
   actualGender: null,
   dateFormat: 'DD/MM/YYYY',
+  voteUrl: '',
 };
 
 /**

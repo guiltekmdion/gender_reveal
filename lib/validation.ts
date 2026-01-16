@@ -36,7 +36,9 @@ export const configSchema = z.object({
   actualHairColor: z.string().max(50).optional(),
   actualEyeColor: z.string().max(50).optional(),
   // Date format configuration
-  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY']).optional()
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY']).optional(),
+  // Vote URL for QR code
+  voteUrl: z.string().url('URL invalide').optional().or(z.literal(''))
 });
 
 // Auth validation schema

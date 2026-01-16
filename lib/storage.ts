@@ -38,6 +38,8 @@ export interface AppConfig {
   actualEyeColor?: string;
   // Date format configuration
   dateFormat?: string; // Format de date: 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YY'
+  // Vote URL for QR code
+  voteUrl?: string; // URL pour voter (affichée en QR code)
 }
 
 /**
