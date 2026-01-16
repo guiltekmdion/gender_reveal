@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Gender Reveal - Fille ou Garçon ?",
   description: "Application de gender reveal avec pronostics des invités",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
