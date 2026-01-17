@@ -966,7 +966,7 @@ export default function Home() {
         {currentStep === 1 && (
           <div className="pt-8 pb-4 text-center space-y-2">
             <Link 
-              href="/results"
+              href="/results/v2party"
               className="text-sm text-purple-600 hover:text-purple-700 transition-colors block font-medium"
             >
               📊 Voir les statistiques

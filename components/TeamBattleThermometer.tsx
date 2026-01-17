@@ -47,7 +47,7 @@ export default function TeamBattleThermometer({
   
   if (orientation === 'horizontal') {
     return (
-      <div className={`bg-white rounded-3xl shadow-2xl border-2 border-purple-200 p-6 ${shake ? 'animate-shake-horizontal' : ''}`}>
+      <div className={`bg-white rounded-2xl shadow-xl border-2 border-purple-200 p-6 ${shake ? 'animate-shake-horizontal' : ''}`}>
         <div className="flex items-center gap-4 mb-4">
           <Trophy className={`w-8 h-8 ${isGirlLeading ? 'text-pink-500' : isTie ? 'text-purple-500' : 'text-blue-500'} animate-pulse`} />
           <h2 className="text-2xl font-black text-slate-800 uppercase tracking-wider">
@@ -106,7 +106,7 @@ export default function TeamBattleThermometer({
   
   // Vertical orientation - Affichage compact avec thermomètre horizontal
   return (
-    <div className={`h-full flex flex-col bg-white rounded-lg shadow-md border-2 border-purple-200 p-2 ${shake ? 'animate-shake-horizontal' : ''}`}>
+    <div className={`h-full flex flex-col bg-white rounded-2xl shadow-xl border-2 border-purple-200 p-2 ${shake ? 'animate-shake-horizontal' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-center gap-1 mb-2">
         <Trophy className={`w-4 h-4 ${isGirlLeading ? 'text-pink-500' : isTie ? 'text-purple-500' : 'text-blue-500'}`} />

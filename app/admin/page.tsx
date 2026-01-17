@@ -752,7 +752,7 @@ export default function AdminPage() {
               Voir la page publique
             </button>
             <button
-              onClick={() => router.push('/results')}
+              onClick={() => router.push('/results/v2party')}
               className="bg-purple-100 text-purple-700 py-3 rounded-xl font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2"
             >
               <Users size={18} />

@@ -20,6 +20,8 @@ const DEFAULT_CONFIG: AppConfig = {
   voteUrl: '',
   tvMode: false,
   partyMode: false,
+  timezone: 'Europe/Paris',
+  publicMode: false,
 };
 
 /**
@@ -85,8 +87,8 @@ export class DBStorage implements IStorage {
         message: row.message || undefined,
         birthDate: row.birthDate || undefined,
         birthTime: row.birthTime || undefined,
-        weight: row.weight || undefined,
-        height: row.height || undefined,
+        weight: row.weight !== null && row.weight !== undefined ? row.weight : undefined,
+        height: row.height !== null && row.height !== undefined ? row.height : undefined,
         hairColor: row.hairColor || undefined,
         eyeColor: row.eyeColor || undefined,
       }));

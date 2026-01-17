@@ -1,30 +1,76 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Users } from 'lucide-react';
+import { normalizeName } from '@/lib/normalization';
 
 interface NameCloudProps {
   names: Array<{ name: string; choice: 'girl' | 'boy' }>;
   title?: string;
   isTVMode?: boolean;
   compact?: boolean;
+  maxNames?: number; // Limite le nombre de prénoms affichés (top N)
 }
 
-export default function NameCloud({ names, title = 'Les pronostics', isTVMode = false, compact = false }: NameCloudProps) {
+export default function NameCloud({ names, title = 'Les pronostics', isTVMode = false, compact = false, maxNames = 50 }: NameCloudProps) {
+  // Normaliser et regrouper les prénoms
+  const normalizedNames = useMemo(() => {
+    const nameCounts: Record<string, { count: number; girlCount: number; boyCount: number }> = {};
+    
+    names.forEach(({ name, choice }) => {
+      const normalized = normalizeName(name);
+      if (normalized) {
+        if (!nameCounts[normalized]) {
+          nameCounts[normalized] = { count: 0, girlCount: 0, boyCount: 0 };
+        }
+        nameCounts[normalized].count++;
+        if (choice === 'girl') {
+          nameCounts[normalized].girlCount++;
+        } else {
+          nameCounts[normalized].boyCount++;
+        }
+      }
+    });
+    
+    // Trier par count décroissant et prendre le top N
+    const sorted = Object.entries(nameCounts)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, maxNames);
+    
+    // Si on a limité, ajouter "Autres" si nécessaire
+    const totalOriginal = names.length;
+    const totalDisplayed = sorted.reduce((sum, [, counts]) => sum + counts.count, 0);
+    const othersCount = totalOriginal - totalDisplayed;
+    
+    const result: Array<{ name: string; choice: 'girl' | 'boy'; count: number }> = sorted.map(([name, counts]) => {
+      // Déterminer le choix dominant pour l'affichage
+      const dominantChoice = counts.girlCount >= counts.boyCount ? 'girl' : 'boy';
+      return { name, choice: dominantChoice, count: counts.count };
+    });
+    
+    if (othersCount > 0 && sorted.length >= maxNames) {
+      result.push({ name: 'Autres', choice: 'girl', count: othersCount });
+    }
+    
+    return result;
+  }, [names, maxNames]);
+
   const [displayedNames, setDisplayedNames] = useState<Array<{ name: string; choice: 'girl' | 'boy'; x: number; y: number; size: number; rotation: number }>>([]);
 
   useEffect(() => {
     // Générer des positions et tailles aléatoires pour chaque prénom
     const generatePositions = () => {
-      return names.map(({ name, choice }) => {
+      return normalizedNames.map(({ name, choice, count }) => {
         // Position aléatoire dans le conteneur (avec marges)
         const x = Math.random() * 80 + 10; // Entre 10% et 90%
         const y = Math.random() * 80 + 10;
         
-        // Taille basée sur la longueur du prénom (plus long = plus petit pour équilibrer)
+        // Taille basée sur la fréquence (count) et la longueur du prénom
         const baseSize = compact ? 12 : (isTVMode ? 14 : 18);
-        const sizeFactor = Math.max(0.7, 1 - (name.length - 3) * 0.05);
-        const size = baseSize * sizeFactor;
+        const maxCount = Math.max(...normalizedNames.map(n => n.count));
+        const frequencyFactor = count / maxCount; // 0-1
+        const lengthFactor = Math.max(0.7, 1 - (name.length - 3) * 0.05);
+        const size = baseSize * (0.8 + frequencyFactor * 0.4) * lengthFactor;
         
         // Rotation légère aléatoire pour un effet plus naturel
         const rotation = (Math.random() - 0.5) * 15; // Entre -7.5° et +7.5°
@@ -41,16 +87,16 @@ export default function NameCloud({ names, title = 'Les pronostics', isTVMode = 
     };
 
     setDisplayedNames(generatePositions());
-  }, [names, isTVMode]);
+  }, [normalizedNames, isTVMode, compact]);
 
-  if (names.length === 0) {
+  if (normalizedNames.length === 0) {
     return null;
   }
 
   // Séparer les votes fille/garçon pour statistiques
-  const girlVotes = names.filter(n => n.choice === 'girl').length;
-  const boyVotes = names.filter(n => n.choice === 'boy').length;
-  const total = names.length;
+  const girlVotes = normalizedNames.filter(n => n.choice === 'girl').reduce((sum, n) => sum + n.count, 0);
+  const boyVotes = normalizedNames.filter(n => n.choice === 'boy').reduce((sum, n) => sum + n.count, 0);
+  const total = normalizedNames.reduce((sum, n) => sum + n.count, 0);
 
   return (
     <div className={`bg-white rounded-xl shadow-2xl border border-transparent bg-gradient-to-br from-white to-purple-50/30 ${isTVMode ? 'p-2' : 'p-4'} overflow-hidden transition-all duration-300 hover:shadow-3xl hover:scale-[1.01] hover:border-purple-200 animate-fade-in`} style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
@@ -95,7 +141,7 @@ export default function NameCloud({ names, title = 'Les pronostics', isTVMode = 
                 animationDelay: `${index * 30}ms`,
                 zIndex: 1
               }}
-              title={`${item.name} - Team ${isGirl ? 'Fille' : 'Garçon'}`}
+              title={`${item.name} - Team ${isGirl ? 'Fille' : 'Garçon'}${item.count > 1 ? ` (${item.count}x)` : ''}`}
             >
               {item.name}
             </div>

@@ -45,6 +45,10 @@ export interface AppConfig {
   tvMode?: boolean; // Mode TV optimisé pour affichage 4K
   // Party Mode for animated gender reveal evening
   partyMode?: boolean; // Mode soirée avec animations ludiques
+  // Timezone configuration
+  timezone?: string; // Timezone IANA (ex: 'Europe/Paris', 'UTC'). Par défaut: 'Europe/Paris'
+  // Public mode for privacy
+  publicMode?: boolean; // Si true, masque les données sensibles (emails, etc.)
 }
 
 /**

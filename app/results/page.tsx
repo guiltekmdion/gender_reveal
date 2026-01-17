@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import BabyAvatar from '@/components/BabyAvatar';
 import PieChart from '@/components/PieChart';
 import Histogram from '@/components/Histogram';
@@ -18,121 +19,93 @@ import Extremes from '@/components/Extremes';
 import Averages from '@/components/Averages';
 import LiveNotification from '@/components/LiveNotification';
 import BabyPortrait from '@/components/BabyPortrait';
-import { formatDate, formatDateTime } from '@/lib/date-utils';
-
-interface Vote {
-  id: number;
-  name: string;
-  email?: string;
-  choice: 'girl' | 'boy';
-  timestamp: number;
-  message?: string;
-  birthDate?: string;
-  birthTime?: string;
-  weight?: number;
-  height?: number;
-  hairColor?: string;
-  eyeColor?: string;
-}
-
-interface AppConfig {
-  babyName?: string;
-  parentNames?: string;
-  dateFormat?: string;
-  voteUrl?: string;
-  tvMode?: boolean;
-  partyMode?: boolean;
-  dueDate?: string;
-}
+import { formatDate, formatDateTime, getTimezone } from '@/lib/date-utils';
+import { computeStats } from '@/lib/stats/engine';
+import { usePolling } from '@/lib/hooks/usePolling';
+import { maskEmail } from '@/lib/sanitization';
+import type { Vote, AppConfig } from '@/lib/storage';
 
 export default function ResultsPage() {
-  const [votes, setVotes] = useState<Vote[]>([]);
+  const searchParams = useSearchParams();
+  const debugMode = searchParams?.get('debug') === '1';
+  
   const [config, setConfig] = useState<AppConfig>({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [timeSinceUpdate, setTimeSinceUpdate] = useState(0);
+  const [clientTime, setClientTime] = useState<Date | null>(null);
   const [latestVote, setLatestVote] = useState<Vote | null>(null);
 
-  // Fetch data
-  const fetchData = async () => {
-    setIsRefreshing(true);
-    try {
-      const [votesRes, configRes] = await Promise.all([
-        fetch('/api/votes'),
-        fetch('/api/config')
-      ]);
-      
-      if (votesRes.ok) {
-        const votesData = await votesRes.json();
-        // L'API retourne directement un tableau, pas un objet avec .votes
-        const newVotes = Array.isArray(votesData) ? votesData : (votesData.votes || []);
-        
-        // Detect new vote for notification
-        if (newVotes.length > votes.length && newVotes.length > 0) {
-          const newest = newVotes[newVotes.length - 1];
-          setLatestVote(newest);
-        }
-        
-        setVotes(newVotes);
+  // Polling pour les votes avec usePolling hook
+  const {
+    data: votes,
+    error: votesError,
+    isRefreshing,
+    lastUpdate,
+    manualRefresh,
+  } = usePolling<Vote[]>({
+    fetchFn: async () => {
+      const res = await fetch('/api/votes');
+      if (!res.ok) throw new Error('Failed to fetch votes');
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.votes || []);
+    },
+    interval: 10000,
+    compareFn: (oldData, newData) => {
+      // Comparer par IDs pour détecter les nouveaux votes
+      if (!oldData || oldData.length !== newData.length) return false;
+      const oldIds = new Set(oldData.map(v => v.id));
+      return newData.every(v => oldIds.has(v.id));
+    },
+    onSuccess: (newVotes) => {
+      // Détecter nouveau vote pour notification
+      if (votes && newVotes.length > votes.length && newVotes.length > 0) {
+        const newest = newVotes[0]; // Déjà trié par timestamp DESC
+        setLatestVote(newest);
       }
-      
-      if (configRes.ok) {
-        const configData = await configRes.json();
-        setConfig(configData);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setIsRefreshing(false);
-      setTimeSinceUpdate(0);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 10000); // Refresh every 10s
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeSinceUpdate(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeSinceUpdate]);
-
-  // Calculations
-  const totalVotes = votes.length;
-  const girlVotes = votes.filter(v => v.choice === 'girl').length;
-  const boyVotes = votes.filter(v => v.choice === 'boy').length;
-  const girlPercent = totalVotes > 0 ? Math.round((girlVotes / totalVotes) * 100) : 50;
-  const boyPercent = totalVotes > 0 ? Math.round((boyVotes / totalVotes) * 100) : 50;
-
-  // Average weight and height
-  const votesWithWeight = votes.filter(v => v.weight && v.weight > 0);
-  const votesWithHeight = votes.filter(v => v.height && v.height > 0);
-  const averageWeight = votesWithWeight.length > 0
-    ? Math.round(votesWithWeight.reduce((sum, v) => sum + (v.weight || 0), 0) / votesWithWeight.length)
-    : null;
-  const averageHeight = votesWithHeight.length > 0
-    ? Math.round(votesWithHeight.reduce((sum, v) => sum + (v.height || 0), 0) / votesWithHeight.length)
-    : null;
-
-  // Most common gender, hair, eyes
-  const mostCommonGender = girlVotes > boyVotes ? 'girl' : boyVotes > girlVotes ? 'boy' : null;
-  
-  const hairColorCounts: Record<string, number> = {};
-  const eyeColorCounts: Record<string, number> = {};
-  votes.forEach(v => {
-    if (v.hairColor) hairColorCounts[v.hairColor] = (hairColorCounts[v.hairColor] || 0) + 1;
-    if (v.eyeColor) eyeColorCounts[v.eyeColor] = (eyeColorCounts[v.eyeColor] || 0) + 1;
+    },
   });
 
-  const mostCommonHair = Object.keys(hairColorCounts).length > 0
-    ? Object.entries(hairColorCounts).sort((a, b) => b[1] - a[1])[0][0]
-    : null;
-  const mostCommonEyes = Object.keys(eyeColorCounts).length > 0
-    ? Object.entries(eyeColorCounts).sort((a, b) => b[1] - a[1])[0][0]
-    : null;
+  // Fetch config (une seule fois au chargement)
+  useEffect(() => {
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => setConfig(data))
+      .catch(err => console.error('Error fetching config:', err));
+  }, []);
+
+  // Mettre à jour le temps client (SSR-safe)
+  useEffect(() => {
+    setClientTime(new Date());
+    const timer = setInterval(() => {
+      setClientTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Calculer les stats avec le moteur centralisé (useMemo pour performance)
+  const stats = useMemo(() => {
+    if (!votes) return null;
+    return computeStats(votes, config);
+  }, [votes, config]);
+
+  // Utiliser les stats calculées (ou valeurs par défaut si pas encore chargées)
+  const totalVotes = stats?.totalVotes ?? 0;
+  const girlVotes = stats?.girlVotes ?? 0;
+  const boyVotes = stats?.boyVotes ?? 0;
+  const girlPercent = stats?.girlPercent ?? 50;
+  const boyPercent = stats?.boyPercent ?? 50;
+  const mostCommonGender = stats?.mostCommonGender ?? null;
+  const mostCommonHair = stats?.mostCommonHair ?? null;
+  const mostCommonEyes = stats?.mostCommonEyes ?? null;
+  const averageWeight = stats?.averageWeight ?? null;
+  const averageHeight = stats?.averageHeight ?? null;
+  const hairColorCounts = stats?.hairColorCounts ?? {};
+  const eyeColorCounts = stats?.eyeColorCounts ?? {};
+  const dateCounts = stats?.dateCounts ?? {};
+  const timeCounts = stats?.timeCounts ?? {};
+  const sortedDates = stats?.topDates ?? [];
+  const sortedTimes = stats?.topTimes ?? [];
+  const weightData = stats?.weightData ?? [];
+  const heightData = stats?.heightData ?? [];
+  const timeData = stats?.timeData ?? [];
 
   // Color mappings
   const hairColorMap: Record<string, string> = {
@@ -141,6 +114,7 @@ export default function ResultsPage() {
     'Châtains': '#a0522d',
     'Roux': '#ff6347',
     'Noirs': '#1a1a1a',
+    'Autres': '#cccccc',
   };
 
   const eyeColorMap: Record<string, string> = {
@@ -149,36 +123,58 @@ export default function ResultsPage() {
     'Marrons': '#8b4513',
     'Noisette': '#cd853f',
     'Gris': '#a0aec0',
+    'Autres': '#cccccc',
   };
 
   const mostCommonHairHex = mostCommonHair ? hairColorMap[mostCommonHair] || '#f5e6b3' : '#f5e6b3';
   const mostCommonEyeHex = mostCommonEyes ? eyeColorMap[mostCommonEyes] || '#4682b4' : '#4682b4';
 
-  // Date counts
-  const dateCounts: Record<string, number> = {};
-  votes.forEach(v => {
-    if (v.birthDate) {
-      dateCounts[v.birthDate] = (dateCounts[v.birthDate] || 0) + 1;
+  // Format de l'heure de dernière mise à jour (SSR-safe)
+  const lastUpdateTime = useMemo(() => {
+    if (!lastUpdate || !clientTime) return null;
+    const timezone = getTimezone(config);
+    try {
+      const formatter = new Intl.DateTimeFormat('fr-FR', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      return formatter.format(new Date(lastUpdate));
+    } catch {
+      return new Date(lastUpdate).toLocaleTimeString('fr-FR');
     }
-  });
-  const sortedDates = Object.entries(dateCounts).sort((a, b) => b[1] - a[1]);
+  }, [lastUpdate, clientTime, config]);
 
-  // Time counts (birth times)
-  const timeCounts: Record<string, number> = {};
-  votes.forEach(v => {
-    if (v.birthTime) {
-      timeCounts[v.birthTime] = (timeCounts[v.birthTime] || 0) + 1;
-    }
-  });
-  const sortedTimes = Object.entries(timeCounts).sort((a, b) => b[1] - a[1]);
+  // Panneau de debug (si ?debug=1)
+  const DebugPanel = debugMode && stats ? (
+    <div className="fixed bottom-4 right-4 bg-black/90 text-white text-xs p-4 rounded-lg z-50 max-w-xs">
+      <h3 className="font-bold mb-2">Debug Info</h3>
+      <div className="space-y-1">
+        <div>Total votes: {stats.totalVotes}</div>
+        <div>Valid weight count: {stats.validWeightCount}</div>
+        <div>Valid height count: {stats.validHeightCount}</div>
+        {votesError && <div className="text-red-400">Erreur: {votesError.message}</div>}
+        <div>Last update: {lastUpdate ? new Date(lastUpdate).toISOString() : 'N/A'}</div>
+        <div>Build: {process.env.NEXT_PUBLIC_BUILD_TIME || 'dev'}</div>
+      </div>
+    </div>
+  ) : null;
 
-  // Weight and height data for histograms
-  const weightData = votesWithWeight.map(v => v.weight || 0);
-  const heightData = votesWithHeight.map(v => v.height || 0);
+  // Filtrer les votes avec poids et taille pour les histogrammes
+  const votesWithWeight = useMemo(() => {
+    return (votes || []).filter(v => v.weight && v.weight > 0);
+  }, [votes]);
+
+  const votesWithHeight = useMemo(() => {
+    return (votes || []).filter(v => v.height && v.height > 0);
+  }, [votes]);
 
   // PARTY MODE LAYOUT
   if (config.partyMode) {
     return (
+      <>
+        {DebugPanel}
       <div className="h-screen w-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col overflow-hidden">
         {/* Header Compact - Hauteur fixe */}
         <div className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-slate-200 px-4 py-2 flex-shrink-0">
@@ -245,7 +241,7 @@ export default function ResultsPage() {
                           <p className="text-[10px] text-purple-500 font-bold uppercase">Votes</p>
                         </div>
                         <div className="bg-pink-50 rounded p-2 border border-pink-200">
-                          <p className="text-2xl font-black text-pink-600">{votes.filter(v => v.message).length}</p>
+                          <p className="text-2xl font-black text-pink-600">{stats?.votesWithMessages ?? 0}</p>
                           <p className="text-[10px] text-pink-500 font-bold uppercase">Messages</p>
                         </div>
                       </div>
@@ -305,11 +301,11 @@ export default function ResultsPage() {
                     <div className="col-span-2 row-span-1">
                       <StatCard title="Dates" icon={Calendar} color="purple" className="p-1.5">
                         <div className="space-y-1.5 w-full">
-                          {sortedDates.slice(0, 2).map(([date, count], index) => (
-                            <div key={date} className="flex items-center justify-between text-xs px-2 py-1.5 bg-slate-50 rounded border border-slate-200">
+                          {sortedDates.slice(0, 2).map((item, index) => (
+                            <div key={item.date} className="flex items-center justify-between text-xs px-2 py-1.5 bg-slate-50 rounded border border-slate-200">
                               <span className="font-bold text-purple-600">{index + 1}.</span>
-                              <span className="font-semibold text-slate-700 flex-1 text-center truncate">{formatDate(date, undefined, config)}</span>
-                              <span className="font-bold text-purple-600">{count}</span>
+                              <span className="font-semibold text-slate-700 flex-1 text-center truncate">{formatDate(item.date, undefined, config)}</span>
+                              <span className="font-bold text-purple-600">{item.count}</span>
                             </div>
                           ))}
                         </div>
@@ -322,10 +318,10 @@ export default function ResultsPage() {
                     <div className="col-span-2 row-span-1">
                       <StatCard title="Heures" icon={Clock} color="amber" className="p-1.5">
                         <div className="grid grid-cols-2 gap-1.5 text-xs w-full">
-                          {sortedTimes.slice(0, 4).map(([time, count]) => (
-                            <div key={time} className="flex items-center justify-between px-2 py-1.5 bg-amber-50 rounded border border-amber-200">
-                              <span className="font-bold text-amber-700">{time}</span>
-                              <span className="text-amber-600 font-semibold">×{count}</span>
+                          {sortedTimes.slice(0, 4).map((item) => (
+                            <div key={item.time} className="flex items-center justify-between px-2 py-1.5 bg-amber-50 rounded border border-amber-200">
+                              <span className="font-bold text-amber-700">{item.time}</span>
+                              <span className="text-amber-600 font-semibold">×{item.count}</span>
                             </div>
                           ))}
                         </div>
@@ -345,6 +341,7 @@ export default function ResultsPage() {
                           unit="g"
                           height={60}
                           isTVMode={false}
+                          dataType="weight"
                         />
                       </StatCard>
                     </div>
@@ -361,6 +358,7 @@ export default function ResultsPage() {
                           unit="cm"
                           height={60}
                           isTVMode={false}
+                          dataType="height"
                         />
                       </StatCard>
                     </div>
@@ -385,12 +383,15 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // NORMAL LAYOUT (pas de party mode)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
+    <>
+      {DebugPanel}
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
       {/* Header compact style VS */}
       <div className="bg-white shadow-lg border-b border-slate-200 p-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
@@ -408,12 +409,16 @@ export default function ResultsPage() {
                 <div className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-purple-500 animate-pulse' : 'bg-green-500 animate-glow'}`}></div>
                 <span className="text-xs font-bold text-green-700 uppercase tracking-wider">En direct</span>
               </div>
-              <span className="text-xs text-slate-500">il y a {timeSinceUpdate}s</span>
+              {lastUpdateTime && (
+                <span className="text-xs text-slate-500">
+                  Dernière mise à jour : {lastUpdateTime}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Barre de score VS style page principale */}
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden p-1">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-1">
             <div className="flex justify-between text-xs font-bold uppercase tracking-widest px-4 py-2 text-slate-500">
               <span className="text-pink-500">Team Fille ({girlVotes})</span>
               <span className="text-blue-500">Team Garçon ({boyVotes})</span>
@@ -466,12 +471,12 @@ export default function ResultsPage() {
               isTVMode={false}
             />
             <div className="grid grid-cols-2 gap-2 w-full">
-              <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-3 border-2 border-pink-200 text-center">
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-3 border-2 border-pink-200 text-center">
                 <div className="text-3xl text-pink-500 mb-1">♀</div>
                 <p className="text-2xl font-black text-pink-600">{girlPercent}%</p>
                 <p className="text-xs text-pink-600 font-bold">Team Fille</p>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 border-2 border-blue-200 text-center">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-3 border-2 border-blue-200 text-center">
                 <div className="text-3xl text-blue-500 mb-1">♂</div>
                 <p className="text-2xl font-black text-blue-600">{boyPercent}%</p>
                 <p className="text-xs text-blue-600 font-bold">Team Garçon</p>
@@ -502,7 +507,7 @@ export default function ResultsPage() {
         )}
 
         {/* Card 3: Nuage de Prénoms */}
-        {votes.length > 0 && (
+        {stats && !stats.isEmpty && votes && (
           <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <NameCloud 
               names={votes.map(v => ({ name: v.name, choice: v.choice }))}
@@ -552,14 +557,14 @@ export default function ResultsPage() {
           <StatCard title="Moyennes" icon={TrendingUp} color="purple" className="animate-fade-in" style={{ animationDelay: '0.5s' }}>
             <div className="grid grid-cols-2 gap-3 h-full items-center">
               {averageWeight && (
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200 text-center">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-3 border-2 border-purple-200 text-center">
                   <Weight className="w-6 h-6 text-purple-600 mx-auto mb-1" />
                   <p className="text-xl font-black text-purple-700">{averageWeight}g</p>
                   <p className="text-xs text-purple-600 font-bold">Poids</p>
                 </div>
               )}
               {averageHeight && (
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border border-indigo-200 text-center">
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-3 border-2 border-indigo-200 text-center">
                   <Ruler className="w-6 h-6 text-indigo-600 mx-auto mb-1" />
                   <p className="text-xl font-black text-indigo-700">{averageHeight}cm</p>
                   <p className="text-xs text-indigo-600 font-bold">Taille</p>
@@ -587,9 +592,9 @@ export default function ResultsPage() {
         {sortedDates.length > 0 && (
           <StatCard title="Dates populaires" icon={Calendar} color="purple" className="animate-fade-in" style={{ animationDelay: '0.7s' }}>
             <div className="space-y-2 overflow-y-auto">
-              {sortedDates.slice(0, 5).map(([date, count], index) => (
+              {sortedDates.slice(0, 5).map((item, index) => (
                 <div 
-                  key={date}
+                  key={item.date}
                   className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-200"
                 >
                   <div className="flex items-center gap-2">
@@ -597,10 +602,10 @@ export default function ResultsPage() {
                       {index + 1}
                     </div>
                     <span className="text-sm font-medium text-slate-700">
-                      {formatDate(date, undefined, config)}
+                      {formatDate(item.date, undefined, config)}
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-purple-600">{count}</span>
+                  <span className="text-sm font-bold text-purple-600">{item.count}</span>
                 </div>
               ))}
             </div>
@@ -610,19 +615,19 @@ export default function ResultsPage() {
         {/* Card 9: Feed Live - 3 derniers votes */}
         <StatCard title="Votes récents" icon={Users} color="white" className="animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <div className="space-y-2 overflow-y-auto h-full">
-            {votes.length === 0 ? (
+            {stats?.isEmpty || !votes || votes.length === 0 ? (
               <p className="text-center text-slate-400 italic py-8 text-xs">
-                Aucun vote pour l&apos;instant
+                Pas encore de votes
               </p>
             ) : (
-              votes.slice(0, 3).map((vote) => {
+              (stats?.recentVotes ?? votes.slice(0, 3)).slice(0, 3).map((vote) => {
                 const voteTime = new Date(vote.timestamp);
                 const isNew = (Date.now() - voteTime.getTime()) < 60000;
                 
                 return (
                   <div
                     key={vote.id}
-                    className="p-2 bg-white rounded-xl border border-slate-50 shadow-sm"
+                    className="p-2 bg-white rounded-2xl border-2 border-slate-200 shadow-xl"
                   >
                     <div className="flex items-start gap-2 mb-1">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-lg font-bold
@@ -682,6 +687,7 @@ export default function ResultsPage() {
                 height={120}
                 bins={8}
                 isTVMode={false}
+                dataType="weight"
               />
             </div>
           </StatCard>
@@ -699,6 +705,7 @@ export default function ResultsPage() {
                 height={120}
                 bins={8}
                 isTVMode={false}
+                dataType="height"
               />
             </div>
           </StatCard>
@@ -708,9 +715,9 @@ export default function ResultsPage() {
         {sortedTimes.length > 0 && (
           <StatCard title="Heures populaires" icon={Clock} color="amber" className="animate-fade-in" style={{ animationDelay: '1.1s' }}>
             <div className="space-y-2 overflow-y-auto">
-              {sortedTimes.slice(0, 8).map(([time, count], index) => (
+              {sortedTimes.slice(0, 8).map((item, index) => (
                 <div 
-                  key={time}
+                  key={item.time}
                   className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-200"
                 >
                   <div className="flex items-center gap-2">
@@ -718,10 +725,10 @@ export default function ResultsPage() {
                       {index + 1}
                     </div>
                     <span className="text-sm font-medium text-slate-700">
-                      {time}
+                      {item.time}
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-amber-600">{count}</span>
+                  <span className="text-sm font-bold text-amber-600">{item.count}</span>
                 </div>
               ))}
             </div>
@@ -750,19 +757,19 @@ export default function ResultsPage() {
             <div className="flex items-center justify-between p-2 bg-slate-50 rounded">
               <span className="text-sm text-slate-700">Avec prédictions</span>
               <span className="text-lg font-black text-slate-700">
-                {votes.filter(v => v.birthDate || v.weight || v.height).length}
+                {stats?.votesWithPredictions ?? 0}
               </span>
             </div>
             <div className="flex items-center justify-between p-2 bg-slate-50 rounded">
               <span className="text-sm text-slate-700">Avec message</span>
               <span className="text-lg font-black text-slate-700">
-                {votes.filter(v => v.message).length}
+                {stats?.votesWithMessages ?? 0}
               </span>
             </div>
             <div className="flex items-center justify-between p-2 bg-slate-50 rounded">
               <span className="text-sm text-slate-700">Avec email</span>
               <span className="text-lg font-black text-slate-700">
-                {votes.filter(v => v.email).length}
+                {stats?.votesWithEmail ?? 0}
               </span>
             </div>
           </div>
@@ -784,5 +791,6 @@ export default function ResultsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

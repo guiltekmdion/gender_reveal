@@ -84,7 +84,7 @@ export default function Averages({ votes, compact = false }: AveragesProps) {
 
   if (averages.length === 0) {
     return (
-      <div className={`bg-white rounded-xl shadow-lg border-2 border-purple-200 ${compact ? 'p-2' : 'p-6'} h-full flex flex-col items-center justify-center`}>
+      <div className={`bg-white rounded-2xl shadow-xl border-2 border-purple-200 ${compact ? 'p-2' : 'p-6'} h-full flex flex-col items-center justify-center`}>
         <TrendingUp className={`text-purple-300 ${compact ? 'w-8 h-8 mb-2' : 'w-16 h-16 mb-4'}`} />
         <p className={`text-slate-400 font-medium text-center ${compact ? 'text-xs' : 'text-lg'}`}>
           Pas assez de données
@@ -96,7 +96,7 @@ export default function Averages({ votes, compact = false }: AveragesProps) {
   if (compact) {
     // Version ultra compacte pour Party Mode
     return (
-      <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-1.5 h-full flex flex-col">
+      <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-200 p-1.5 h-full flex flex-col">
         {/* Content compact - Pas de header */}
         <div className="grid grid-cols-2 gap-1.5 flex-1 overflow-hidden">
           {averages.slice(0, 4).map((avg, index) => (
@@ -123,7 +123,7 @@ export default function Averages({ votes, compact = false }: AveragesProps) {
 
   // Version normale
   return (
-    <div className="bg-white rounded-3xl shadow-2xl border-2 border-purple-200 p-6 h-full flex flex-col">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-200 p-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <TrendingUp className="w-6 h-6 text-purple-500 animate-pulse" />

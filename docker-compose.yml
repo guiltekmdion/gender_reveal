@@ -1,14 +1,65 @@
+version: '3.8'
+
 services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
+  gender-reveal-app:
+    container_name: gender-reveal-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-key}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://gender.guiltek.cloud}
       - STORAGE_TYPE=${STORAGE_TYPE:-file}
       - DATABASE_PATH=${DATABASE_PATH:-./data/gender_reveal.db}
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
     volumes:
-      - ./data:/app/data
+      - gender_reveal_data:/app/data
+    networks:
+      - traefik
+      - gender_reveal_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/config"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      # Labels Portainer
+      - "com.portainer.label.name=Gender Reveal App"
+      - "com.portainer.label.description=Application de révélation de genre pour bébé"
+      - "com.portainer.label.category=Web Application"
+      # Labels Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      # Router HTTPS principal
+      - "traefik.http.routers.gender-reveal.rule=Host(`gender.guiltek.cloud`)"
+      - "traefik.http.routers.gender-reveal.entrypoints=websecure"
+      - "traefik.http.routers.gender-reveal.tls=true"
+      - "traefik.http.routers.gender-reveal.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.gender-reveal.service=gender-reveal-service"
+      # Router HTTP (redirige vers HTTPS)
+      - "traefik.http.routers.gender-reveal-http.rule=Host(`gender.guiltek.cloud`)"
+      - "traefik.http.routers.gender-reveal-http.entrypoints=web"
+      - "traefik.http.routers.gender-reveal-http.middlewares=gender-reveal-redirect"
+      # Middleware de redirection HTTPS
+      - "traefik.http.middlewares.gender-reveal-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.gender-reveal-redirect.redirectscheme.permanent=true"
+      # Service
+      - "traefik.http.services.gender-reveal-service.loadbalancer.server.port=3000"
+
+volumes:
+  gender_reveal_data:
+    driver: local
+    name: gender_reveal_data
+
+networks:
+  traefik:
+    external: true
+    name: traefik
+  gender_reveal_network:
+    driver: bridge
+    name: gender_reveal_network

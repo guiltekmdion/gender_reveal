@@ -57,7 +57,7 @@ export default function CalendarHeatmap({
   const range = getDateRange();
   if (!range) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-slate-100 text-center text-slate-400">
+      <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-slate-200 text-center text-slate-400">
         <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">Aucune date prédite pour l&apos;instant</p>
       </div>
@@ -172,7 +172,7 @@ export default function CalendarHeatmap({
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
   return (
-    <div className={`bg-white rounded-xl shadow-2xl border border-transparent bg-gradient-to-br from-white to-purple-50/30 ${compact ? 'p-2' : (isTVMode ? 'p-2' : 'p-3')} overflow-hidden transition-all duration-300 hover:shadow-3xl hover:scale-[1.01] hover:border-purple-200 animate-fade-in`} style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+    <div className={`bg-white rounded-2xl shadow-xl border-2 border-purple-200 bg-gradient-to-br from-white to-purple-50/30 ${compact ? 'p-2' : (isTVMode ? 'p-2' : 'p-3')} overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] animate-fade-in`}>
       <h2 className={`${compact ? 'text-xs' : (isTVMode ? 'text-xs' : 'text-sm')} font-bold text-slate-800 ${compact ? 'mb-1' : (isTVMode ? 'mb-0.5' : 'mb-2')} flex items-center gap-1`}>
         <CalendarIcon size={compact ? 12 : (isTVMode ? 11 : 14)} />
         Calendrier des dates prédites

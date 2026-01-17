@@ -35,7 +35,7 @@ export default function StatCard({
   
   return (
     <div 
-      className={`rounded-xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${colorClasses[color]} ${className} flex flex-col min-h-0 overflow-hidden`}
+      className={`rounded-2xl shadow-xl border-2 transition-all duration-300 hover:shadow-2xl ${colorClasses[color]} ${className} flex flex-col min-h-0 overflow-hidden`}
       style={style}
     >
       {/* Pas de header en mode ultra-compact pour gagner de la place */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import type { Vote } from '@/lib/storage';
 import { detectSentiment } from '@/lib/emoji-detector';
+import { sanitizeMessage, cleanMessage } from '@/lib/sanitization';
 
 interface MessageCarouselProps {
   votes: Vote[];
@@ -33,7 +34,7 @@ export default function MessageCarousel({
   
   if (messagesVotes.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-white to-purple-50 rounded-3xl shadow-2xl border-2 border-purple-200 h-full flex flex-col items-center justify-center p-8">
+      <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-xl border-2 border-purple-200 h-full flex flex-col items-center justify-center p-8">
         <MessageCircle className="w-16 h-16 text-purple-300 mb-4" />
         <p className="text-xl text-slate-400 font-medium text-center">
           Aucun message pour l&apos;instant
@@ -98,9 +99,12 @@ export default function MessageCarousel({
           <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-md border border-purple-100">
             <div className="flex items-start gap-2">
               <div className="text-2xl flex-shrink-0">{emoji}</div>
-              <p className="text-sm text-slate-700 leading-relaxed font-medium flex-1">
-                &ldquo;{currentVote.message}&rdquo;
-              </p>
+              <p 
+                className="text-sm text-slate-700 leading-relaxed font-medium flex-1 line-clamp-3"
+                dangerouslySetInnerHTML={{ 
+                  __html: `&ldquo;${sanitizeMessage(cleanMessage(currentVote.message, 200))}&rdquo;` 
+                }}
+              />
             </div>
           </div>
         </div>

@@ -30,6 +30,29 @@ export default function BabyPortrait({ votes, config }: BabyPortraitProps) {
   const mostCommonEyes = Object.keys(eyeColorCounts).length > 0
     ? Object.entries(eyeColorCounts).sort((a, b) => b[1] - a[1])[0][0]
     : undefined;
+
+  // Color mappings pour convertir les noms en couleurs hex
+  const hairColorMap: Record<string, string> = {
+    'Blonds': '#f5e6b3',
+    'Bruns': '#8b4513',
+    'Châtains': '#a0522d',
+    'Roux': '#ff6347',
+    'Noirs': '#1a1a1a',
+    'Autres': '#cccccc',
+  };
+
+  const eyeColorMap: Record<string, string> = {
+    'Bleus': '#4682b4',
+    'Verts': '#90ee90',
+    'Marrons': '#8b4513',
+    'Noisette': '#cd853f',
+    'Gris': '#a0aec0',
+    'Autres': '#cccccc',
+  };
+
+  // Convertir les noms de couleurs en valeurs hex
+  const mostCommonHairHex = mostCommonHair ? (hairColorMap[mostCommonHair] || '#8b6f47') : undefined;
+  const mostCommonEyesHex = mostCommonEyes ? (eyeColorMap[mostCommonEyes] || '#5b4636') : undefined;
   
   // Average weight and height
   const votesWithWeight = votes.filter(v => v.weight && v.weight > 0);
@@ -84,8 +107,8 @@ export default function BabyPortrait({ votes, config }: BabyPortraitProps) {
         <div className="animate-pop-in">
           <BabyAvatar
             gender={mostCommonGender}
-            hairColor={mostCommonHair}
-            eyeColor={mostCommonEyes}
+            hairColor={mostCommonHairHex}
+            eyeColor={mostCommonEyesHex}
             size={120}
           />
         </div>
