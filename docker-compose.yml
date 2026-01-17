@@ -6,21 +6,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
+      - NODE_ENV=production
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-key}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://gender.guiltek.cloud}
       - STORAGE_TYPE=${STORAGE_TYPE:-file}
       - DATABASE_PATH=${DATABASE_PATH:-./data/gender_reveal.db}
-      - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
     volumes:
       - gender_reveal_data:/app/data
     networks:
-      - traefik
-      - gender_reveal_network
-    restart: unless-stopped
+      - proxy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/config"]
       interval: 30s
@@ -28,28 +27,41 @@ services:
       retries: 3
       start_period: 40s
     labels:
-      # Labels Portainer
-      - "com.portainer.label.name=Gender Reveal App"
-      - "com.portainer.label.description=Application de révélation de genre pour bébé"
-      - "com.portainer.label.category=Web Application"
-      # Labels Traefik
+      # Traefik configuration
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-      # Router HTTPS principal
+      - "traefik.docker.network=proxy"
+      
+      # HTTP Router (Port 80) - Redirect to HTTPS
+      - "traefik.http.routers.gender-reveal-http.rule=Host(`gender.guiltek.cloud`)"
+      - "traefik.http.routers.gender-reveal-http.entrypoints=web"
+      - "traefik.http.routers.gender-reveal-http.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+      # HTTPS Router (Port 443)
       - "traefik.http.routers.gender-reveal.rule=Host(`gender.guiltek.cloud`)"
       - "traefik.http.routers.gender-reveal.entrypoints=websecure"
       - "traefik.http.routers.gender-reveal.tls=true"
-      - "traefik.http.routers.gender-reveal.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.gender-reveal.service=gender-reveal-service"
-      # Router HTTP (redirige vers HTTPS)
-      - "traefik.http.routers.gender-reveal-http.rule=Host(`gender.guiltek.cloud`)"
-      - "traefik.http.routers.gender-reveal-http.entrypoints=web"
-      - "traefik.http.routers.gender-reveal-http.middlewares=gender-reveal-redirect"
-      # Middleware de redirection HTTPS
-      - "traefik.http.middlewares.gender-reveal-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.gender-reveal-redirect.redirectscheme.permanent=true"
-      # Service
-      - "traefik.http.services.gender-reveal-service.loadbalancer.server.port=3000"
+      - "traefik.http.routers.gender-reveal.tls.certresolver=myresolver"
+      
+      # Service definition
+      - "traefik.http.services.gender-reveal.loadbalancer.server.port=3000"
+      
+      # Security headers middleware
+      - "traefik.http.middlewares.gender-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.gender-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.gender-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.gender-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.gender-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.gender-headers.headers.frameDeny=true"
+      - "traefik.http.routers.gender-reveal.middlewares=gender-headers"
+      
+      # Portainer labels
+      - "com.portainer.label.name=Gender Reveal App"
+      - "com.portainer.label.description=Application de révélation de genre pour bébé"
+      - "com.portainer.label.category=Web Application"
+      - "com.docker.stack.namespace=gender-reveal"
+      - "io.portainer.access.control=public"
 
 volumes:
   gender_reveal_data:
@@ -57,9 +69,5 @@ volumes:
     name: gender_reveal_data
 
 networks:
-  traefik:
+  proxy:
     external: true
-    name: traefik
-  gender_reveal_network:
-    driver: bridge
-    name: gender_reveal_network
