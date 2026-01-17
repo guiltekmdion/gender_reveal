@@ -47,6 +47,22 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 2,
+    name: 'add_message_column',
+    up: (db: Database.Database) => {
+      // Ajouter la colonne message à la table votes
+      // SQLite permet d'ajouter une colonne avec ALTER TABLE ADD COLUMN
+      try {
+        db.exec(`ALTER TABLE votes ADD COLUMN message TEXT;`);
+      } catch (error: any) {
+        // Si la colonne existe déjà, ignorer l'erreur
+        if (!error.message?.includes('duplicate column name')) {
+          throw error;
+        }
+      }
+    },
+  },
 ];
 
 /**

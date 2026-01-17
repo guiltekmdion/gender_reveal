@@ -14,6 +14,7 @@ interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  message?: string;
   // Extended predictions
   birthDate?: string;
   birthTime?: string;
@@ -52,6 +53,7 @@ export default function Home() {
   const [heightTouched, setHeightTouched] = useState(false);
   const [hairColor, setHairColor] = useState('');
   const [eyeColor, setEyeColor] = useState('');
+  const [message, setMessage] = useState('');
   
   const [showConfetti, setShowConfetti] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Nom+Choix, 2: Prédictions
@@ -101,21 +103,23 @@ export default function Home() {
 
   // Sauvegarde automatique dans localStorage
   useEffect(() => {
-    if (name || selectedChoice || email || birthDate || birthTime || weight || height || hairColor || eyeColor) {
+    if (name || selectedChoice || email || message || birthDate || birthTime || weight || height || hairColor || eyeColor) {
       const draft = {
         name,
         choice: selectedChoice,
         email,
+        message,
         birthDate,
         birthTime,
         weight: weightTouched ? weight : '',
         height: heightTouched ? height : '',
         hairColor,
         eyeColor,
+        currentStep,
       };
       localStorage.setItem('vote_draft', JSON.stringify(draft));
     }
-  }, [name, selectedChoice, email, birthDate, birthTime, weight, weightTouched, height, heightTouched, hairColor, eyeColor]);
+  }, [name, selectedChoice, email, message, birthDate, birthTime, weight, weightTouched, height, heightTouched, hairColor, eyeColor, currentStep]);
 
   // Récupération au chargement
   useEffect(() => {
@@ -138,8 +142,11 @@ export default function Home() {
         }
         if (parsed.hairColor) setHairColor(parsed.hairColor);
         if (parsed.eyeColor) setEyeColor(parsed.eyeColor);
+        if (parsed.message) setMessage(parsed.message);
         // Restaurer l'étape si des données existent
-        if (parsed.name && parsed.choice) {
+        if (parsed.currentStep) {
+          setCurrentStep(parsed.currentStep);
+        } else if (parsed.name && parsed.choice) {
           setCurrentStep(2);
         }
       } catch (e) {
@@ -260,6 +267,7 @@ export default function Home() {
         name: string; 
         choice: 'girl' | 'boy'; 
         email?: string;
+        message?: string;
         birthDate?: string;
         birthTime?: string;
         weight?: number;
@@ -273,6 +281,10 @@ export default function Home() {
 
       if (!skipEmail && email.trim()) {
         voteData.email = email.trim();
+      }
+
+      if (message.trim()) {
+        voteData.message = message.trim();
       }
 
       // Add predictions if provided
@@ -305,6 +317,7 @@ export default function Home() {
         setHeightTouched(false);
         setHairColor('');
         setEyeColor('');
+        setMessage('');
         setCurrentStep(1);
         setSubmitError(null);
         setShowConfetti(true);
@@ -783,6 +796,40 @@ export default function Home() {
                     autoComplete="email"
                     className="w-full text-center text-base border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[48px] focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300"
                   />
+                </div>
+
+                {/* Champ message */}
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="text-center mb-4">
+                    <h3 className="text-base font-bold text-slate-800 mb-1">
+                      Laisse un petit mot 💬
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      (optionnel - max 200 caractères)
+                    </p>
+                  </div>
+                  <textarea
+                    value={message}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 200) {
+                        setMessage(e.target.value);
+                      }
+                    }}
+                    onFocus={(e) => {
+                      setTimeout(() => {
+                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 300);
+                    }}
+                    placeholder="Ex: Félicitations ! Je suis tellement heureux(se) pour vous ! 🎉"
+                    rows={3}
+                    maxLength={200}
+                    className="w-full text-base border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[80px] focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all placeholder:text-slate-300 resize-none"
+                  />
+                  <div className="text-right mt-1">
+                    <span className={`text-xs ${message.length >= 180 ? 'text-orange-500' : 'text-slate-400'}`}>
+                      {message.length}/200
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

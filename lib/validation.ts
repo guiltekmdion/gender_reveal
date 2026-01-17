@@ -5,6 +5,7 @@ export const voteSchema = z.object({
   name: z.string().min(1, 'Le prénom est requis').max(100, 'Le prénom est trop long'),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   choice: z.enum(['girl', 'boy']),
+  message: z.string().max(200, 'Le message est trop long (200 caractères maximum)').optional().or(z.literal('')),
   // Extended predictions
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
   birthTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Format HH:mm requis').optional().or(z.literal('')),
@@ -40,7 +41,9 @@ export const configSchema = z.object({
   // Vote URL for QR code
   voteUrl: z.string().url('URL invalide').optional().or(z.literal('')),
   // TV Mode for 4K display
-  tvMode: z.boolean().optional()
+  tvMode: z.boolean().optional(),
+  // Party Mode for animated gender reveal evening
+  partyMode: z.boolean().optional()
 });
 
 // Auth validation schema

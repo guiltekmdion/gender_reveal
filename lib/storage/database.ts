@@ -19,6 +19,7 @@ const DEFAULT_CONFIG: AppConfig = {
   dateFormat: 'DD/MM/YYYY',
   voteUrl: '',
   tvMode: false,
+  partyMode: false,
 };
 
 /**
@@ -81,6 +82,7 @@ export class DBStorage implements IStorage {
         email: row.email || undefined,
         choice: row.choice as 'girl' | 'boy',
         timestamp: row.timestamp,
+        message: row.message || undefined,
         birthDate: row.birthDate || undefined,
         birthTime: row.birthTime || undefined,
         weight: row.weight || undefined,
@@ -100,8 +102,8 @@ export class DBStorage implements IStorage {
   addVote(vote: Omit<Vote, 'id' | 'timestamp'>): Vote {
     const transaction = this.db.transaction(() => {
       const stmt = this.db.prepare(`
-        INSERT INTO votes (name, email, choice, timestamp, birthDate, birthTime, weight, height, hairColor, eyeColor)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO votes (name, email, choice, timestamp, message, birthDate, birthTime, weight, height, hairColor, eyeColor)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const timestamp = Date.now();
@@ -110,6 +112,7 @@ export class DBStorage implements IStorage {
         vote.email || null,
         vote.choice,
         timestamp,
+        vote.message || null,
         vote.birthDate || null,
         vote.birthTime || null,
         vote.weight || null,
@@ -124,6 +127,7 @@ export class DBStorage implements IStorage {
         email: vote.email,
         choice: vote.choice,
         timestamp,
+        message: vote.message,
         birthDate: vote.birthDate,
         birthTime: vote.birthTime,
         weight: vote.weight,

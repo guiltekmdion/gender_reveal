@@ -8,6 +8,7 @@ export interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  message?: string; // Petit mot avec le vote
   // Extended predictions
   birthDate?: string; // ISO date string
   birthTime?: string; // HH:mm format
@@ -42,6 +43,8 @@ export interface AppConfig {
   voteUrl?: string; // URL pour voter (affichée en QR code)
   // TV Mode for 4K display
   tvMode?: boolean; // Mode TV optimisé pour affichage 4K
+  // Party Mode for animated gender reveal evening
+  partyMode?: boolean; // Mode soirée avec animations ludiques
 }
 
 /**
@@ -50,12 +53,12 @@ export interface AppConfig {
  */
 let storageInstance: ReturnType<typeof import('./storage/interface').getStorage> | null = null;
 
-function getStorageInstance() {
+function getStorageInstance(): ReturnType<typeof import('./storage/interface').getStorage> {
   if (!storageInstance) {
     const { getStorage } = require('./storage/interface');
     storageInstance = getStorage();
   }
-  return storageInstance;
+  return storageInstance!;
 }
 
 /**

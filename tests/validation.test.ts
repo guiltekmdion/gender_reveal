@@ -37,13 +37,27 @@ function testVoteSchema() {
     name: 'Marie',
     email: 'marie@example.com',
     choice: 'girl',
+    message: 'Félicitations ! Je suis tellement heureuse pour vous ! 🎉',
     birthDate: '2025-06-15',
     birthTime: '14:30',
     weight: 3500,
     height: 50,
     hairColor: 'Blonds',
     eyeColor: 'Bleus'
-  }, 'Vote complet valide');
+  }, 'Vote complet valide avec message');
+  
+  // Vote avec message optionnel vide
+  assertValid(voteSchema, {
+    name: 'Jean',
+    choice: 'boy',
+    message: ''
+  }, 'Message optionnel vide accepté');
+  
+  // Vote sans message (optionnel omis)
+  assertValid(voteSchema, {
+    name: 'Sophie',
+    choice: 'girl'
+  }, 'Message optionnel omis accepté');
 
   // Email optionnel vide
   assertValid(voteSchema, {
@@ -125,6 +139,20 @@ function testVoteSchema() {
     choice: 'boy',
     height: 150
   }, 'Taille trop élevée rejetée');
+  
+  // Message trop long
+  assertInvalid(voteSchema, {
+    name: 'Test',
+    choice: 'boy',
+    message: 'A'.repeat(201) // 201 caractères
+  }, 'Message trop long rejeté (201 caractères)');
+  
+  // Message à la limite (200 caractères)
+  assertValid(voteSchema, {
+    name: 'Test',
+    choice: 'boy',
+    message: 'A'.repeat(200) // 200 caractères exactement
+  }, 'Message à la limite accepté (200 caractères)');
 
   console.log('\n✅ Tous les tests voteSchema passés\n');
 }

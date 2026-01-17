@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS votes (
   email TEXT,
   choice TEXT NOT NULL CHECK(choice IN ('girl', 'boy')),
   timestamp INTEGER NOT NULL,
+  message TEXT,
   birthDate TEXT,
   birthTime TEXT,
   weight INTEGER,

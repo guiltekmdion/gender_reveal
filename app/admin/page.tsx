@@ -25,6 +25,7 @@ interface AppConfig {
   dateFormat?: string;
   voteUrl?: string;
   tvMode?: boolean;
+  partyMode?: boolean;
 }
 
 interface Vote {
@@ -471,6 +472,25 @@ export default function AdminPage() {
                   </span>
                   <p className="text-xs text-slate-500 mt-1">
                     Active le mode optimisé pour affichage sur TV 4K avec tailles de police et espacements augmentés. Les statistiques seront automatiquement rafraîchies toutes les 10 secondes.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.partyMode || false}
+                  onChange={(e) => setConfig({ ...config, partyMode: e.target.checked })}
+                  className="w-5 h-5 text-purple-600 border-2 border-slate-300 rounded focus:ring-purple-500 focus:ring-2"
+                />
+                <div className="flex-1">
+                  <span className="block text-sm font-medium text-slate-700">
+                    🎉 Mode Soirée (animations ludiques)
+                  </span>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Active le layout spécial soirée gender reveal avec animations, fun facts rotatifs, messages défilants, thermomètre géant, et records. Optimisé pour écran 16:9.
                   </p>
                 </div>
               </label>

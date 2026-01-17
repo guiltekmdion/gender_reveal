@@ -22,6 +22,7 @@ const DEFAULT_CONFIG: AppConfig = {
   dateFormat: 'DD/MM/YYYY',
   voteUrl: '',
   tvMode: false,
+  partyMode: false,
 };
 
 /**
@@ -63,6 +64,7 @@ export class FileStorage implements IStorage {
       name: vote.name,
       email: vote.email,
       choice: vote.choice,
+      message: vote.message,
       birthDate: vote.birthDate,
       birthTime: vote.birthTime,
       weight: vote.weight,
