@@ -43,3 +43,9 @@ next-env.d.ts
 
 # data directory (persistent storage)
 /data
+
+# debug files
+.cursor/
+*.md.debug
+DEBUG_*.md
+PORTAINER_*.md
