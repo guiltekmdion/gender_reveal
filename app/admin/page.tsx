@@ -34,6 +34,7 @@ interface Vote {
   email?: string;
   choice: 'girl' | 'boy';
   timestamp: number;
+  message?: string;
   birthDate?: string;
   birthTime?: string;
   weight?: number;
@@ -171,92 +172,109 @@ export default function AdminPage() {
   };
 
   const handleExportCSV = () => {
-    if (votes.length === 0) {
-      alert('Aucun vote à exporter');
-      return;
-    }
+    try {
+      if (votes.length === 0) {
+        alert('Aucun vote à exporter');
+        return;
+      }
 
-    // En-têtes CSV en français
-    const headers = [
-      'Nom',
-      'Email',
-      'Choix',
-      'Date du vote',
-      'Date de naissance prédite',
-      'Heure de naissance prédite',
-      'Poids prédit (g)',
-      'Taille prédite (cm)',
-      'Couleur cheveux prédite',
-      'Couleur yeux prédite'
-    ];
-
-    // Convertir les votes en lignes CSV
-    const rows = votes.map(vote => {
-      // Convertir le choix en français
-      const choiceText = vote.choice === 'girl' ? 'Fille' : 'Garçon';
-      
-      // Formater la date du vote
-      const voteDate = formatDateTime(new Date(vote.timestamp), undefined, config);
-      
-      // Formater la date de naissance prédite si elle existe
-      const birthDateFormatted = vote.birthDate 
-        ? formatDate(vote.birthDate, undefined, config)
-        : '';
-      
-      // Fonction helper pour échapper les valeurs CSV (ajouter des guillemets si nécessaire)
-      const escapeCSV = (value: string | number | undefined): string => {
-        if (value === undefined || value === null || value === '') {
-          return '';
-        }
-        const str = String(value);
-        // Si la valeur contient une virgule, un guillemet ou un saut de ligne, l'entourer de guillemets
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-
-      return [
-        escapeCSV(vote.name),
-        escapeCSV(vote.email),
-        escapeCSV(choiceText),
-        escapeCSV(voteDate),
-        escapeCSV(birthDateFormatted),
-        escapeCSV(vote.birthTime),
-        escapeCSV(vote.weight),
-        escapeCSV(vote.height),
-        escapeCSV(vote.hairColor),
-        escapeCSV(vote.eyeColor)
+      // En-têtes CSV en français
+      const headers = [
+        'Nom',
+        'Email',
+        'Choix',
+        'Date du vote',
+        'Date de naissance prédite',
+        'Heure de naissance prédite',
+        'Poids prédit (g)',
+        'Taille prédite (cm)',
+        'Couleur cheveux prédite',
+        'Couleur yeux prédite',
+        'Message'
       ];
-    });
 
-    // Créer le contenu CSV
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+      // Convertir les votes en lignes CSV
+      const rows = votes.map(vote => {
+        // Convertir le choix en français
+        const choiceText = vote.choice === 'girl' ? 'Fille' : 'Garçon';
+        
+        // Formater la date du vote
+        const voteDate = formatDateTime(new Date(vote.timestamp), undefined, config);
+        
+        // Formater la date de naissance prédite si elle existe
+        const birthDateFormatted = vote.birthDate 
+          ? formatDate(vote.birthDate, undefined, config)
+          : '';
+        
+        // Fonction helper pour échapper les valeurs CSV (ajouter des guillemets si nécessaire)
+        const escapeCSV = (value: string | number | undefined): string => {
+          if (value === undefined || value === null || value === '') {
+            return '';
+          }
+          const str = String(value);
+          // Si la valeur contient une virgule, un guillemet ou un saut de ligne, l'entourer de guillemets
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
 
-    // Ajouter le BOM UTF-8 pour Excel
-    const BOM = '\uFEFF';
-    const csvWithBOM = BOM + csvContent;
+        return [
+          escapeCSV(vote.name),
+          escapeCSV(vote.email),
+          escapeCSV(choiceText),
+          escapeCSV(voteDate),
+          escapeCSV(birthDateFormatted),
+          escapeCSV(vote.birthTime),
+          escapeCSV(vote.weight),
+          escapeCSV(vote.height),
+          escapeCSV(vote.hairColor),
+          escapeCSV(vote.eyeColor),
+          escapeCSV(vote.message) // Ajouter le message si présent
+        ];
+      });
 
-    // Créer le Blob et télécharger
-    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Nom de fichier avec date
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-    link.download = `votes_gender_reveal_${dateStr}.csv`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Nettoyer l'URL
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+      // Créer le contenu CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Ajouter le BOM UTF-8 pour Excel
+      const BOM = '\uFEFF';
+      const csvWithBOM = BOM + csvContent;
+
+      // Créer le Blob et télécharger
+      const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.style.display = 'none'; // Cacher le lien
+      
+      // Nom de fichier avec date
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      link.download = `votes_gender_reveal_${dateStr}.csv`;
+      
+      // Ajouter au DOM, cliquer, puis retirer
+      document.body.appendChild(link);
+      link.click();
+      
+      // Nettoyer après un court délai
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      // Message de confirmation
+      setSaveStatus('✓ Export réussi !');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('Erreur lors de l\'export CSV:', error);
+      alert('Erreur lors de l\'export. Veuillez réessayer.');
+      setSaveStatus('✗ Erreur export');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
   };
 
   // Login screen
@@ -650,10 +668,14 @@ export default function AdminPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleExportCSV}
-                className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+                className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={votes.length === 0}
               >
                 <Download size={16} />
                 Exporter en CSV
+                {saveStatus && saveStatus.includes('Export') && (
+                  <span className="text-xs">{saveStatus}</span>
+                )}
               </button>
               <button
                 onClick={handleClearVotes}
