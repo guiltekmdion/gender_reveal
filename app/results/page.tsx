@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -23,9 +23,10 @@ import { formatDate, formatDateTime, getTimezone } from '@/lib/date-utils';
 import { computeStats } from '@/lib/stats/engine';
 import { usePolling } from '@/lib/hooks/usePolling';
 import { maskEmail } from '@/lib/sanitization';
+import { toGender } from '@/lib/gender-utils';
 import type { Vote, AppConfig } from '@/lib/storage';
 
-export default function ResultsPage() {
+function ResultsPageContent() {
   const searchParams = useSearchParams();
   const debugMode = searchParams?.get('debug') === '1';
   
@@ -212,12 +213,12 @@ export default function ResultsPage() {
               
               {/* Bébé Portrait - 30% */}
               <div className="w-[30%]">
-                <BabyPortrait votes={votes} config={config} />
+                <BabyPortrait votes={votes || []} config={config} />
               </div>
               
               {/* Fun Facts avec QR Code - 40% */}
               <div className="flex-1">
-                <FunFacts votes={votes} config={config} autoRotate={true} intervalSeconds={12} includeQRCode={true} compact={true} />
+                <FunFacts votes={votes || []} config={config} autoRotate={true} intervalSeconds={12} includeQRCode={true} compact={true} />
               </div>
             </div>
             
@@ -225,7 +226,7 @@ export default function ResultsPage() {
             <div className="h-[68%] flex gap-2">
               {/* Message Carousel en hauteur - 30% de largeur */}
               <div className="w-[30%]">
-                <MessageCarousel votes={votes} displayDuration={8000} animationType="slide" />
+                <MessageCarousel votes={votes || []} displayDuration={8000} animationType="slide" />
               </div>
               
               {/* Grid Stats Ultra Compactes - 70% de largeur */}
@@ -250,7 +251,7 @@ export default function ResultsPage() {
                   
                   {/* Moyennes - 2 cols */}
                   <div className="col-span-2 row-span-1">
-                    <Averages votes={votes} compact={true} />
+                    <Averages votes={votes || []} compact={true} />
                   </div>
                   
                   {/* Cheveux + Yeux groupés - 2 cols */}
@@ -492,7 +493,7 @@ export default function ResultsPage() {
               <BabyAvatar 
                 hairColor={mostCommonHairHex} 
                 eyeColor={mostCommonEyeHex} 
-                gender={mostCommonGender || undefined}
+                gender={toGender(mostCommonGender)}
                 size={120}
               />
               <div className="mt-2 text-center text-xs text-slate-600">
@@ -792,5 +793,20 @@ export default function ResultsPage() {
       </div>
     </div>
     </>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <ResultsPageContent />
+    </Suspense>
   );
 }

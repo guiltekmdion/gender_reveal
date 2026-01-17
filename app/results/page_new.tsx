@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Baby, Calendar, Clock, Weight, Ruler, Palette, Eye, ArrowLeft, Users, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import BabyAvatar from '@/components/BabyAvatar';
+import { toGender } from '@/lib/gender-utils';
 import PieChart from '@/components/PieChart';
 import CalendarHeatmap from '@/components/CalendarHeatmap';
 import ColorPieChart from '@/components/ColorPieChart';
@@ -241,7 +242,7 @@ export default function ResultsPage() {
               <BabyAvatar 
                 hairColor={mostCommonHairHex} 
                 eyeColor={mostCommonEyeHex} 
-                gender={mostCommonGender}
+                gender={toGender(mostCommonGender)}
                 size={120}
               />
               <div className="mt-2 text-center text-xs text-slate-600">

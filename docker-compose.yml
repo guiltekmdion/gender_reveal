@@ -6,6 +6,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Optimisations pour Portainer CI/CD
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+      # Utiliser le cache Docker si disponible
+      cache_from:
+        - gender-reveal-app:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -43,6 +49,7 @@ services:
       - "traefik.http.routers.gender-reveal.entrypoints=websecure"
       - "traefik.http.routers.gender-reveal.tls=true"
       - "traefik.http.routers.gender-reveal.tls.certresolver=myresolver"
+      - "traefik.http.routers.gender-reveal.service=gender-reveal"
       
       # Service definition
       - "traefik.http.services.gender-reveal.loadbalancer.server.port=3000"
@@ -71,3 +78,4 @@ volumes:
 networks:
   proxy:
     external: true
+    name: proxy

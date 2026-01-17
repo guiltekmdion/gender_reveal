@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  gender-reveal-app:
+    container_name: gender-reveal-app-local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=admin123
+      - JWT_SECRET=test-secret-key
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - STORAGE_TYPE=file
+      - DATABASE_PATH=./data/gender_reveal.db
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - gender_reveal_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/config"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  gender_reveal_data:
+    driver: local
+    name: gender_reveal_data

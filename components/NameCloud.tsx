@@ -55,7 +55,7 @@ export default function NameCloud({ names, title = 'Les pronostics', isTVMode = 
     return result;
   }, [names, maxNames]);
 
-  const [displayedNames, setDisplayedNames] = useState<Array<{ name: string; choice: 'girl' | 'boy'; x: number; y: number; size: number; rotation: number }>>([]);
+  const [displayedNames, setDisplayedNames] = useState<Array<{ name: string; choice: 'girl' | 'boy'; x: number; y: number; size: number; rotation: number; count: number }>>([]);
 
   useEffect(() => {
     // Générer des positions et tailles aléatoires pour chaque prénom
@@ -81,7 +81,8 @@ export default function NameCloud({ names, title = 'Les pronostics', isTVMode = 
           x,
           y,
           size,
-          rotation
+          rotation,
+          count
         };
       });
     };

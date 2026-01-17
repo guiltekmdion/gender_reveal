@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { Calendar, Clock, Weight, Ruler, ArrowLeft, Users, Palette, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -20,7 +20,7 @@ import { computeStats } from '@/lib/stats/engine';
 import { usePolling } from '@/lib/hooks/usePolling';
 import type { Vote, AppConfig } from '@/lib/storage';
 
-export default function ResultsV2PartyPage() {
+function ResultsV2PartyPageContent() {
   const searchParams = useSearchParams();
   const debugMode = searchParams?.get('debug') === '1';
   
@@ -581,5 +581,20 @@ export default function ResultsV2PartyPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ResultsV2PartyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <ResultsV2PartyPageContent />
+    </Suspense>
   );
 }

@@ -106,7 +106,7 @@ export default function BabyPortrait({ votes, config }: BabyPortraitProps) {
       <div className="flex-1 flex items-center justify-center">
         <div className="animate-pop-in">
           <BabyAvatar
-            gender={mostCommonGender}
+            gender={mostCommonGender || undefined}
             hairColor={mostCommonHairHex}
             eyeColor={mostCommonEyesHex}
             size={120}

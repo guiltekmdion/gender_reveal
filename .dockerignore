@@ -45,9 +45,9 @@ docs
 *.swo
 *~
 
-# Docker
-Dockerfile
-docker-compose.yml
+# Docker (keep Dockerfile and docker-compose.yml for Portainer builds)
+# Dockerfile
+# docker-compose.yml
 .dockerignore
 
 # Data (will be mounted as volume)
