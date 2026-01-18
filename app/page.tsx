@@ -473,8 +473,8 @@ export default function Home() {
                       : 'border-slate-100 hover:border-pink-200 bg-white hover:bg-pink-50 text-slate-400 grayscale hover:grayscale-0'
                     }`}
                 >
-                  <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <div className="text-3xl font-bold leading-none">♀</div>
+                  <div className={`p-3 rounded-full flex items-center justify-center ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none flex items-center justify-center">♀</div>
                   </div>
                   <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
                     Fille
@@ -495,8 +495,8 @@ export default function Home() {
                       : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-400 grayscale hover:grayscale-0'
                     }`}
                 >
-                  <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <div className="text-3xl font-bold leading-none">♂</div>
+                  <div className={`p-3 rounded-full flex items-center justify-center ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none flex items-center justify-center">♂</div>
                   </div>
                   <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
                     Garçon
