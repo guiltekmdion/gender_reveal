@@ -406,9 +406,9 @@ export default function Home() {
         
         {/* Barre de Score / Stats */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden p-1 relative">
-          <div className="flex justify-between text-xs font-bold uppercase tracking-widest px-4 py-2 text-slate-500">
-            <span className="text-pink-500">Team Fille ({girlVotes})</span>
-            <span className="text-blue-500">Team Garçon ({boyVotes})</span>
+          <div className="flex justify-between text-xs font-bold uppercase tracking-wide px-3 py-2 text-slate-500 gap-2">
+            <span className="text-pink-500 truncate">Team Fille ({girlVotes})</span>
+            <span className="text-blue-500 truncate">Team Garçon ({boyVotes})</span>
           </div>
           
           <div className="h-6 w-full flex rounded-full overflow-hidden bg-slate-100 relative">
@@ -473,8 +473,8 @@ export default function Home() {
                       : 'border-slate-100 hover:border-pink-200 bg-white hover:bg-pink-50 text-slate-400 grayscale hover:grayscale-0'
                     }`}
                 >
-                  <div className={`p-3 rounded-full ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <div className="text-3xl font-bold leading-none">♀</div>
+                  <div className={`p-3 rounded-full flex items-center justify-center ${selectedChoice === 'girl' ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none flex items-center justify-center">♀</div>
                   </div>
                   <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'girl' ? 'text-pink-600' : 'text-slate-400'}`}>
                     Fille
@@ -495,8 +495,8 @@ export default function Home() {
                       : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-400 grayscale hover:grayscale-0'
                     }`}
                 >
-                  <div className={`p-3 rounded-full ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <div className="text-3xl font-bold leading-none">♂</div>
+                  <div className={`p-3 rounded-full flex items-center justify-center ${selectedChoice === 'boy' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className="text-3xl font-bold leading-none flex items-center justify-center">♂</div>
                   </div>
                   <span className={`font-bold uppercase tracking-wider ${selectedChoice === 'boy' ? 'text-blue-600' : 'text-slate-400'}`}>
                     Garçon
@@ -607,7 +607,7 @@ export default function Home() {
                           setWeightTouched(true);
                           setWeight(e.target.value);
                         }}
-                        className="w-full mt-2 accent-purple-600 h-2"
+                        className="w-full mt-2 accent-purple-600 h-3 cursor-pointer"
                         aria-label="Poids du bébé en grammes"
                       />
                     </div>
@@ -650,7 +650,7 @@ export default function Home() {
                           setHeightTouched(true);
                           setHeight(e.target.value);
                         }}
-                        className="w-full mt-2 accent-purple-600 h-2"
+                        className="w-full mt-2 accent-purple-600 h-3 cursor-pointer"
                         aria-label="Taille du bébé en centimètres"
                       />
                     </div>
@@ -679,7 +679,7 @@ export default function Home() {
                       </p>
                       <p className="text-[10px] text-slate-400">Choisis une couleur</p>
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {hairOptions.map((opt) => {
                         const isSelected = hairColor === opt.value;
                         return (
@@ -687,7 +687,7 @@ export default function Home() {
                             key={opt.value}
                             type="button"
                             onClick={() => setHairColor(opt.value)}
-                            className={`h-12 w-12 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
+                            className={`aspect-square min-h-[44px] rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
                               ${isSelected
                                 ? 'border-white ring-2 ring-purple-400 shadow'
                                 : 'border-slate-200 hover:border-slate-300'}
@@ -725,7 +725,7 @@ export default function Home() {
                       </p>
                       <p className="text-[10px] text-slate-400">Choisis une couleur</p>
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {eyeOptions.map((opt) => {
                         const isSelected = eyeColor === opt.value;
                         return (
@@ -733,7 +733,7 @@ export default function Home() {
                             key={opt.value}
                             type="button"
                             onClick={() => setEyeColor(opt.value)}
-                            className={`h-12 w-12 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
+                            className={`aspect-square min-h-[44px] rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-95
                               ${isSelected
                                 ? 'border-white ring-2 ring-purple-400 shadow'
                                 : 'border-slate-200 hover:border-slate-300'}
