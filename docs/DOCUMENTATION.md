@@ -175,6 +175,40 @@ Modal de prédictions adaptée aux petits écrans.
 
 ---
 
+### Optimisations Mobile & Accessibilité
+
+L'application a été optimisée pour offrir une expérience mobile optimale avec un focus sur l'accessibilité tactile :
+
+#### Améliorations de la Barre de Vote
+- **Texte optimisé** : Espacement réduit (`tracking-wide`) pour éviter l'overflow sur petits écrans
+- **Troncature intelligente** : Les labels "Team Fille" et "Team Garçon" sont tronqués si nécessaire
+- **Padding adaptatif** : Réduction de `px-4` à `px-3` pour plus d'espace sur mobiles très étroits (320px)
+
+#### Boutons Tactiles Accessibles
+Tous les boutons interactifs respectent les **normes WCAG d'accessibilité tactile** :
+- **Boutons de couleur** : Minimum 44px × 44px (`aspect-square min-h-[44px]`)
+- **Boutons d'action** : Minimum 48px de hauteur (`min-h-[48px]`)
+- **Espacement responsive** : `gap-2` sur mobile, `gap-3` sur écrans plus larges
+
+#### Sliders Améliorés
+- **Hauteur augmentée** : Passage de `h-2` (8px) à `h-3` (12px) pour une manipulation plus facile
+- **Curseur pointer** : Indication visuelle claire de l'interaction possible
+- **Zone de touche élargie** : Plus facile à manipuler avec le doigt
+
+#### Tests de Compatibilité
+- ✅ iPhone SE (375×667px) - Écran standard
+- ✅ Très petits mobiles (320×568px) - Compatibilité maximale
+- ✅ iPhone 12/13/14 (390×844px) - Écrans modernes
+- ✅ Tablettes (768px+) - Layout adaptatif
+
+#### Performances
+- Pas d'images lourdes, uniquement du SVG
+- Animations CSS natives (pas de JavaScript)
+- Chargement progressif
+- Transitions fluides même sur appareils anciens
+
+---
+
 ## 🎨 Système BabyAvatar (Paperdoll)
 
 Le système d'avatar utilise une architecture **inspirée de DiceBear** mais entièrement personnalisée :
@@ -323,11 +357,15 @@ npm run test:headed # Mode visible
 - Animations CSS natives
 
 ### Accessibilité
-- Labels ARIA sur les boutons de couleur
-- Contrôles clavier
-- Contrastes WCAG AA
-- Textes alternatifs
+- **Labels ARIA** sur tous les boutons de couleur et contrôles interactifs
+- **Contrôles clavier** pour la navigation complète sans souris
+- **Contrastes WCAG AA** respectés sur tous les textes et éléments UI
+- **Textes alternatifs** descriptifs sur les images et icônes
+- **Touch targets** minimum 44px respectant les normes WCAG 2.1 Level AAA
+- **Sliders accessibles** avec `aria-label` descriptifs et hauteur augmentée
+- **Focus indicators** visibles sur tous les éléments interactifs
+- **Responsive design** adapté aux très petits écrans (320px minimum)
 
 ---
 
-*Documentation mise à jour le 26 décembre 2025*
+*Documentation mise à jour le 18 janvier 2026*
